@@ -1,25 +1,115 @@
-library("MASS", lib.loc="C:/Program Files/R/R-3.6.0/library")
-library("lattice", lib.loc="C:/Program Files/R/R-3.6.0/library")
-library("boot", lib.loc="C:/Program Files/R/R-3.6.0/library")
-library("car", lib.loc="~/R/win-library/3.6")
-library("emmeans", lib.loc="~/R/win-library/3.6")
-library("lme4", lib.loc="~/R/win-library/3.6")
-library("zoo", lib.loc="~/R/win-library/3.6")
-library("tidyr", lib.loc="~/R/win-library/3.6")
-library("multcomp", lib.loc="~/R/win-library/3.6")
-library("foreign", lib.loc="~/R/win-library/3.6")
-library("msm", lib.loc="~/R/win-library/3.6")
-library("ggplot2", lib.loc="~/R/win-library/3.6")
-library("effects", lib.loc="~/R/win-library/3.6")
-library("lmerTest", lib.loc="~/R/win-library/3.6")
-#library("dplyr", lib.loc="~/R/win-library/3.6")
+# Load Packages ####
+
+# Check if Rtools is installed and prompt user if not
+if (!require(installr)) {
+  install.packages("installr")
+  library(installr)
+}
+
+# See if rtools is installed. It has necessary C++ compiler for installs of some of the libraries that are required.
+if (Sys.which("make") == "") {  # Check to see if "make" command from rtools is found in system's PATH. If an empty string is retuned, rtools isn't installed.
+  message("Rtools is not found. Please install Rtools from https://cran.r-project.org/bin/windows/Rtools/ and restart R.")
+} else { #rtools installed == TRUE
+  message("Rtools is installed.")
+  
+  # Load package or install MASS and load if not present
+  if (!require(MASS)) {
+    install.packages("MASS")
+    library(MASS)
+  }
+  
+  # Load package or install lattice and load if not present
+  if (!require(lattice)) {
+    install.packages("lattice")
+    library(lattice)
+  }
+  
+  # Load package or install boot and load if not present
+  if (!require(boot)) {
+    install.packages("boot")
+    library(boot)
+  }
+  
+  # Load package or install car and load if not present
+  if (!require(car)) {
+    install.packages("car")
+    library(car)
+  }
+  
+  # Load package or install emmeans and load if not present
+  if (!require(emmeans)) {
+    install.packages("emmeans")
+    library(emmeans)
+  }
+  
+  
+  # Load package or install lme4 and load if not present
+  if (!require(lme4)) {
+    install.packages("lme4")
+    library(lme4)
+  }
+  
+  # Load package or install zoo and load if not present
+  if (!require(zoo)) {
+    install.packages("zoo")
+    library(zoo)
+  }
+  
+  # Load package or install tidyr and load if not present
+  if (!require(tidyr)) {
+    install.packages("tidyr")
+    library(tidyr)
+  }
+  
+  # Load package or install ggplot2 and load if not present
+  if (!require(ggplot2)) {
+    install.packages("ggplot2")
+    library(ggplot2)
+  }
+  
+  # Load package or install lmerTest and load if not present
+  if (!require(lmerTest)) {
+    install.packages("lmerTest")
+    library(lmerTest)
+  }
+  
+  # Load package or install dplyr and load if not present
+  if (!require(dplyr)) {
+    install.packages("dplyr")
+    library(dplyr)
+  }
+  
+  # Packages that may be needed, maybe not:
+  
+  # Load package or install multcomp and load if not present
+  if (!require(multcomp)) {
+    install.packages("multcomp")
+    library(multcomp)
+  }
+  
+  # Load package or install foreign and load if not present
+  if (!require(foreign)) {
+    install.packages("foreign")
+    library(foreign)
+  }
+  
+  # Load package or install msm and load if not present
+  if (!require(msm)) {
+    install.packages("msm")
+    library(msm)
+  }
+  
+  # Load package or install effects and load if not present
+  if (!require(effects)) {
+    install.packages("effects")
+    library(effects)
+  }
+  
+} #end rtools installed == TRUE
 
 
 #Read in data file with auto-headings and blanks/ N/As set to blank ("")
-#Laptop
-#myd <- read.csv("C:/Users/Thomas/Google Drive/Grad/Lab/Projects/Phase II Projects - Analysis & Write-up/Masters/Results/Analyses/ABHV2018.csv", na.strings="\"\"")
-#Home
-myd <- read.csv("C:/Users/Kiersten/Google Drive/Grad/Lab/Projects/Phase II Projects - Analysis & Write-up/Masters/Results/Analyses/ABHV2018.csv", na.strings="\"\"")
+myd <- read.csv("C:/Users/Kieri/Documents/ABHV/ABHV2018.csv", na.strings="\"\"")
 View(myd)
 
 
