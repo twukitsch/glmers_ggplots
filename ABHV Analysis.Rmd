@@ -1,5 +1,5 @@
 ---
-title: "ABHV Analysis"
+title: "Masters Example for Running GLMER and LMER Models with lme4"
 author: "TJ Wukitsch"
 date: "July 2023"
 output: github_document
@@ -243,7 +243,7 @@ Now we have our data list object with the following hierarchical structure:
     * `$ctrl`
     * `$no.ctrl`
 
-And I have performed my coding adjustments. However, we still need to further prepare our data to avoid issues during analysis such as problems with variance inflation. If we mean-center the continuous variables that will be predictors in an LMER or GLMER model, we tend to have situations where the variance inflation factor remains within a tolerable range and doesn't affect results.
+And I have performed my coding adjustments. However, I still need to further prepare our data to avoid issues during analysis such as problems with variance inflation. If I mean-center the continuous variables that will be predictors in an LMER or GLMER model, the variance inflation factor tends to remain within a tolerable range and doesn't affect results. Thus I mean-center the variables I need to below and save my workspace.
 
 ```{r Centering Variables}
 # Centering Variables
@@ -288,6 +288,50 @@ save.image("ABHV_workspace.RData")
 ```
 
 ## Models (Analyses)
+
+To accommodate and store each list object returned by our models I need another hierarchical list object with a similar structure to the data above. However, there is more nuance because I am performing analyses for hedonic and aversive responses and, for each of those, I have analyses that involve different variables that were calculated from modeling other related data (total ethanol, MR, and MR3). So I will need a different list structure, and I may want to generate the list structure in advance so I can populate it with a list. It should look something like this:
+
+* models
+  * ethanol
+    * aversive
+      * overall
+      * total ethanol
+      * Mean Alcohol Consumed & Rate of Change
+      * Mean Alcohol Consumed & Rate of Change excluding day 3
+    * hedonic
+      * overall
+      * total ethanol
+      * Mean Alcohol Consumed & Rate of Change
+      * Mean Alcohol Consumed & Rate of Change excluding day 3
+  * sucrose
+    * aversive
+      * overall
+      * total ethanol
+      * Mean Alcohol Consumed & Rate of Change
+    * hedonic
+      * overall
+      * total ethanol
+      * Mean Alcohol Consumed & Rate of Change
+  * water
+    * aversive
+      * overall
+      * total ethanol
+      * Mean Alcohol Consumed & Rate of Change
+    * hedonic
+      * overall
+      * total ethanol
+      * Mean Alcohol Consumed & Rate of Change
+
+```{r Generating Model List(s)}
+models <- list()
+ #will need to use list here
+models$eth <- list()
+models$suc <- list()
+```
+
+
+
+
 
 
 In the end, our specific lists of objects with abbreviations looks like this:

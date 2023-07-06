@@ -587,12 +587,12 @@ data$h2o$no.ctrl$c.ROC <- data$h2o$no.ctrl$ROC-mean(data$h2o$no.ctrl$ROC)
 
 ###Variable Coding Adjustment###
 
+# Get rid of the 4 levels of Substance inherited from the original dataset
+data$h2o$ctrl$Substance <- factor(data$h2o$ctrl$Substance)
 #Adjust contrasts to sum-to-zero
 contrasts(data$h2o$no.ctrl$Substance)=contr.sum(2)
 contrasts(data$h2o$no.ctrl$Substance)
 
-contrasts(data$h2o$no.ctrl$Age)=contr.sum(2)
-contrasts(data$h2o$no.ctrl$Age)
 
 
 ## WATER AVERSIVES #####
