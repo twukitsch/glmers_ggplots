@@ -1,11 +1,5 @@
 # Load Packages ####
 
-# Check if Rtools is installed and prompt user if not
-if (!require(installr)) {
-  install.packages("installr")
-  library(installr)
-}
-
 # See if rtools is installed. It has necessary C++ compiler for installs of some of the libraries that are required.
 if (Sys.which("make") == "") {  # Check to see if "make" command from rtools is found in system's PATH. If an empty string is retuned, rtools isn't installed.
   message("Rtools is not found. Please install Rtools from https://cran.r-project.org/bin/windows/Rtools/ and restart R.")
@@ -105,12 +99,18 @@ if (Sys.which("make") == "") {  # Check to see if "make" command from rtools is 
     library(effects)
   }
   
+  
+  print("******** INSTALLATION AND LOADING COMPLETE ********")
 } #end rtools installed == TRUE
 
 
 #Read in data file with auto-headings and blanks/ N/As set to blank ("")
-myd <- read.csv("C:/Users/Kieri/Documents/ABHV/ABHV2018.csv", na.strings="\"\"")
-View(myd)
+data <- list()
+
+#Read in data file with auto-headings and blanks/ N/As set to blank ("")
+data$raw <- read.csv("C:/Users/Kieri/Documents/ABHV/ABHV2018.csv", na.strings="\"\"", stringsAsFactors = TRUE)
+data$raw$RatID <- as.factor(data$raw$RatID) # Convert RatID to factor because it is not a numeric variable
+View(data$raw)
 
 
 # ETHANOL #####
@@ -118,59 +118,59 @@ View(myd)
 ###Data Frame Preparation###
 
 ##Subset for Substance
-mydetoh <- subset(myd, Substance == "Ethanol")
-View(mydetoh)
-
-##Rescaling
-#Rescale concentration to avoid issues with eigen values
-mydetoh$recoded.conc <- car::recode(mydetoh$Concentration, "5 =.05; 20 =.20; 40 =.40")
-
-##Subset for Consumption Pattern Variables
-mydetoh.noCTRL <- subset(mydetoh, Condition != "CTRL")
-View(mydetoh.noCTRL)
+  # With Controls
+  data$eth$ctrl <- subset(data$raw, Substance == "Ethanol")
+    # Rescaling concentration to avoid issues with eigen values
+    data$eth$ctrl$recoded.conc <- car::recode(data$eth$ctrl$Concentration, "5 =.05; 20 =.20; 40 =.40")
+  # No Controls
+    # Subset rats that could drink ethanol from rats that never had the opportunity
+  data$eth$no.ctrl <- subset(data$eth$ctrl, Condition != "CTRL")
+  
+  View(data$eth$ctrl)
+  View(data$eth$no.ctrl)
 
 ##Centering
 #center concentration to avoid issues with variance inflation
-mydetoh$c.conc <- mydetoh$recoded.conc-mean(mydetoh$recoded.conc)
+data$eth$ctrl$c.conc <- data$eth$ctrl$recoded.conc-mean(data$eth$ctrl$recoded.conc)
 #center TOTAL.ETOH.Swap.Consumed..g.kg. to avoid issues with variance inflation
-mydetoh.noCTRL$c.totale <- mydetoh.noCTRL$TOTAL.ETOH.Swap.Consumed..g.kg.-mean(mydetoh.noCTRL$TOTAL.ETOH.Swap.Consumed..g.kg.)
+data$eth$no.ctrl$c.totale <- data$eth$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg.-mean(data$eth$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg.)
 #center concentration for noCTRL subset to avoid issues with variance inflation
-mydetoh.noCTRL$c.conc <- mydetoh.noCTRL$recoded.conc-mean(mydetoh.noCTRL$recoded.conc)
+data$eth$no.ctrl$c.conc <- data$eth$no.ctrl$recoded.conc-mean(data$eth$no.ctrl$recoded.conc)
 #center MAC and ROC for noCTRL subset to avoid issues with variance inflation
-mydetoh.noCTRL$c.MAC <- mydetoh.noCTRL$MAC-mean(mydetoh.noCTRL$MAC)
-mydetoh.noCTRL$c.ROC <- mydetoh.noCTRL$ROC-mean(mydetoh.noCTRL$ROC)
-mydetoh.noCTRL$c.MAC3 <- mydetoh.noCTRL$MAC3-mean(mydetoh.noCTRL$MAC3)
-mydetoh.noCTRL$c.ROC3 <- mydetoh.noCTRL$ROC3-mean(mydetoh.noCTRL$ROC3)
+data$eth$no.ctrl$c.MAC <- data$eth$no.ctrl$MAC-mean(data$eth$no.ctrl$MAC)
+data$eth$no.ctrl$c.ROC <- data$eth$no.ctrl$ROC-mean(data$eth$no.ctrl$ROC)
+data$eth$no.ctrl$c.MAC3 <- data$eth$no.ctrl$MAC3-mean(data$eth$no.ctrl$MAC3)
+data$eth$no.ctrl$c.ROC3 <- data$eth$no.ctrl$ROC3-mean(data$eth$no.ctrl$ROC3)
 
 ###Variable Coding Adjustment###
 
 #adjust Age to contrast coding
-contrasts(mydetoh$Age)=contr.sum(2)
-contrasts(mydetoh$Age)
+contrasts(data$eth$ctrl$Age)=contr.sum(2)
+contrasts(data$eth$ctrl$Age)
 #Returns:
 #           [,1]
 #Adolescent    1
 #Adult        -1
 
 #adjust Condition to contrast coding
-contrasts(mydetoh$Condition)=contr.sum(2)
-contrasts(mydetoh$Condition)
+contrasts(data$eth$ctrl$Condition)=contr.sum(2)
+contrasts(data$eth$ctrl$Condition)
 #Returns:
 #     [,1]
 #CTRL    1
 #EtOH   -1
 
-contrasts(mydetoh.noCTRL$Age)=contr.sum(2)
-contrasts(mydetoh.noCTRL$Age)
+contrasts(data$eth$no.ctrl$Age)=contr.sum(2)
+contrasts(data$eth$no.ctrl$Age)
 
-contrasts(mydetoh.noCTRL$Condition)=contr.sum(2)
-contrasts(mydetoh.noCTRL$Condition)
+contrasts(data$eth$no.ctrl$Condition)=contr.sum(2)
+contrasts(data$eth$no.ctrl$Condition)
 
 ## ETHANOL AVERSIVES ANALYSES#####
 
 ### Ethanol Aversives GLMER (with EtOH vs CTRL)####
 Eavers <-glmer(Total.Aversive ~ c.conc*Age*Condition 
-                  + (c.conc|RatID), data=mydetoh, family=poisson)
+                  + (c.conc|RatID), data=data$eth$ctrl, family=poisson)
 summary(Eavers)
 
 #Post Hocs & Planned Contrasts
@@ -182,7 +182,7 @@ summary(Eavers.emm.c, type = "response")
 ### Ethanol Aversives GLMER (EtOH Group Only: Total EtOH Consumed) ######
 
 EaversTot <-glmer(Total.Aversive ~ c.conc*Age*c.totale 
-               + (c.conc|RatID), data=mydetoh.noCTRL, family=poisson)
+               + (c.conc|RatID), data=data$eth$no.ctrl, family=poisson)
 
 # Model did not converge, used code below to extend # of iterations and start from where the previous model left off.
 ss1 <- getME(EaversTot,c("theta","fixef"))
@@ -204,7 +204,7 @@ EaversMR <-glmer(Total.Aversive ~ c.conc+Age+c.MAC+c.ROC
                  + Age:c.ROC
                  + c.conc:Age:c.MAC
                  + c.conc:Age:c.ROC
-                 + (c.conc|RatID), data=mydetoh.noCTRL, family=poisson)
+                 + (c.conc|RatID), data=data$eth$no.ctrl, family=poisson)
 
 # Model did not converge, used code below to extend # of iterations and start from where the previous model left off.
 ss3 <- getME(EaversMR,c("theta","fixef"))
@@ -239,7 +239,7 @@ EaversMR3 <-glmer(Total.Aversive ~ c.conc+Age+c.MAC3+c.ROC3
                  + Age:c.ROC3
                  + c.conc:Age:c.MAC3
                  + c.conc:Age:c.ROC3
-                 + (c.conc|RatID), data=mydetoh.noCTRL, family=poisson)
+                 + (c.conc|RatID), data=data$eth$no.ctrl, family=poisson)
 
 # Model did not converge, used code below to extend # of iterations and start from where the previous model left off.
 ss12 <- getME(EaversMR3,c("theta","fixef"))
@@ -268,7 +268,7 @@ dev.off()
 
 ### Ethanol Hedonics GLMER (with EtOH vs CTRL)####
 Ehed <-glmer(Total.Hedonic...MM.~c.conc*Age*Condition
-                + (c.conc|RatID), data=mydetoh, family=poisson) #Either syntax works for Intercept & Slope inclusion
+                + (c.conc|RatID), data=data$eth$ctrl, family=poisson) #Either syntax works for Intercept & Slope inclusion
 summary(Ehed)
 
 #Post Hocs & Planned Contrasts
@@ -285,7 +285,7 @@ Ehed.emm.c_c
 ### Ethanol Hedonics GLMER (EtOH Group Only: Total EtOH Consumed) ######
 
 EhedTot <-glmer(Total.Hedonic...MM. ~ c.conc*Age*c.totale 
-                  + (c.conc|RatID), data=mydetoh.noCTRL, family=poisson)
+                  + (c.conc|RatID), data=data$eth$no.ctrl, family=poisson)
 summary(EhedTot)
 
 #Post Hocs and Planned Contrasts
@@ -303,7 +303,7 @@ EhedMR <-glmer(Total.Hedonic...MM. ~ c.conc+Age+c.MAC+c.ROC
                  + Age:c.ROC
                  + c.conc:Age:c.MAC
                  + c.conc:Age:c.ROC
-                 + (c.conc|RatID), data=mydetoh.noCTRL, family=poisson)
+                 + (c.conc|RatID), data=data$eth$no.ctrl, family=poisson)
 summary(EhedMR)
 vif(EhedMR)
 AIC(EhedMR, EhedTot)
@@ -335,7 +335,7 @@ EhedMR3 <-glmer(Total.Hedonic...MM. ~ c.conc+Age+c.MAC3+c.ROC3
                + Age:c.ROC3
                + c.conc:Age:c.MAC3
                + c.conc:Age:c.ROC3
-               + (c.conc|RatID), data=mydetoh.noCTRL, family=poisson)
+               + (c.conc|RatID), data=data$eth$no.ctrl, family=poisson)
 summary(EhedMR3)
 vif(EhedMR3)
 AIC(EhedMR3, EhedMR, EhedTot)
@@ -364,47 +364,47 @@ dev.off()
 ###Data Frame Preparation###
 
 ##subset for Substance
-mydsuc <- subset(myd, Substance == "Sucrose")
-View(mydsuc)
+data$suc$ctrl <- subset(data@raw, Substance == "Sucrose")
+View(data$suc$ctrl)
 ##Subset for Consumption Pattern Variables
-mydsuc.noCTRL <- subset(mydsuc, Condition != "CTRL")
-View(mydsuc.noCTRL)
+data$suc$no.ctrl <- subset(data$suc$ctrl, Condition != "CTRL")
+View(data$suc$no.ctrl)
 
 ##Rescaling
 #convert concentration to molarity and center to avoid issues with scaling & vif
-mydsuc$molarity <-recode(mydsuc$Concentration, ".34=.01; 3.4=.1; 34=1")
-mydsuc$c.molarity <-mydsuc$molarity-mean(mydsuc$molarity)
+data$suc$ctrl$molarity <-recode(data$suc$ctrl$Concentration, ".34=.01; 3.4=.1; 34=1")
+data$suc$ctrl$c.molarity <-data$suc$ctrl$molarity-mean(data$suc$ctrl$molarity)
 #convert concentration to molarity and center to avoid issues with scaling & vif
-mydsuc.noCTRL$molarity <-recode(mydsuc.noCTRL$Concentration, ".34=.01; 3.4=.1; 34=1")
-mydsuc.noCTRL$c.molarity <-mydsuc.noCTRL$molarity-mean(mydsuc.noCTRL$molarity)
+data$suc$no.ctrl$molarity <-recode(data$suc$no.ctrl$Concentration, ".34=.01; 3.4=.1; 34=1")
+data$suc$no.ctrl$c.molarity <-data$suc$no.ctrl$molarity-mean(data$suc$no.ctrl$molarity)
 
 ##Centering
 #center TOTAL.ETOH.Swap.Consumed..g.kg. to avoid issues with variance inflation
-mydsuc.noCTRL$c.totale <- mydsuc.noCTRL$TOTAL.ETOH.Swap.Consumed..g.kg.-mean(mydsuc.noCTRL$TOTAL.ETOH.Swap.Consumed..g.kg.)
+data$suc$no.ctrl$c.totale <- data$suc$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg.-mean(data$suc$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg.)
 #center MAC and ROC for noCTRL subset to avoid issues with variance inflation
-mydsuc.noCTRL$c.MAC <- mydsuc.noCTRL$MAC-mean(mydsuc.noCTRL$MAC)
-mydsuc.noCTRL$c.ROC <- mydsuc.noCTRL$ROC-mean(mydsuc.noCTRL$ROC)
+data$suc$no.ctrl$c.MAC <- data$suc$no.ctrl$MAC-mean(data$suc$no.ctrl$MAC)
+data$suc$no.ctrl$c.ROC <- data$suc$no.ctrl$ROC-mean(data$suc$no.ctrl$ROC)
 
 ###Variable Coding Adjustment###
 
 #adjust Age and Condition to contrast coding for both datasets
-contrasts(mydsuc$Age)=contr.sum(2)
-contrasts(mydsuc$Age)
+contrasts(data$suc$ctrl$Age)=contr.sum(2)
+contrasts(data$suc$ctrl$Age)
 
-contrasts(mydsuc$Condition)=contr.sum(2)
-contrasts(mydsuc$Condition)
+contrasts(data$suc$ctrl$Condition)=contr.sum(2)
+contrasts(data$suc$ctrl$Condition)
 
-contrasts(mydsuc.noCTRL$Age)=contr.sum(2)
-contrasts(mydsuc.noCTRL$Age)
+contrasts(data$suc$no.ctrl$Age)=contr.sum(2)
+contrasts(data$suc$no.ctrl$Age)
 
-contrasts(mydsuc.noCTRL$Condition)=contr.sum(2)
-contrasts(mydsuc.noCTRL$Condition)
+contrasts(data$suc$no.ctrl$Condition)=contr.sum(2)
+contrasts(data$suc$no.ctrl$Condition)
 
 ## SUCROSE AVERSIVES #####
 
 ### Sucrose Aversives GLMER (with EtOH vs CTRL)####
 Savers <-glmer(Total.Aversive ~ c.molarity*Age*Condition 
-               + (c.molarity|RatID), data=mydsuc, family=poisson)
+               + (c.molarity|RatID), data=data$suc$ctrl, family=poisson)
 # Model did not converge, used code below to extend # of iterations and start from where the previous model left off.
 ss4 <- getME(Savers,c("theta","fixef"))
 Savers <- update(Savers,start=ss4,control=glmerControl(optCtrl=list(maxfun=2e6)))
@@ -418,7 +418,7 @@ summary(Savers.emm.a, type="response")
 ### Sucrose Aversives GLMER (EtOH Group Only: Total EtOH Consumed) ######
 
 SaversTot <-glmer(Total.Aversive ~ c.molarity*Age*c.totale 
-                  + (c.molarity|RatID), data=mydsuc.noCTRL, family=poisson)
+                  + (c.molarity|RatID), data=data$suc$no.ctrl, family=poisson)
 
 # Model did not converge, used code below to extend # of iterations and start from where the previous model left off.
 ss5 <- getME(SaversTot,c("theta","fixef"))
@@ -447,7 +447,7 @@ SaversMR <-glmer(Total.Aversive ~ c.molarity+Age+c.MAC+c.ROC
                  + Age:c.ROC
                  + c.molarity:Age:c.MAC
                  + c.molarity:Age:c.ROC
-                 + (c.molarity|RatID), data=mydsuc.noCTRL, family=poisson)
+                 + (c.molarity|RatID), data=data$suc$no.ctrl, family=poisson)
 
 # Model did not converge, used code below to extend # of iterations and start from where the previous model left off.
 ss6 <- getME(SaversMR,c("theta","fixef"))
@@ -477,7 +477,7 @@ dev.off()
 
 ### Sucrose Hedonics GLMER (with EtOH vs CTRL)####
 Shed <-glmer(Total.Hedonic...MM. ~ c.molarity*Age*Condition 
-               + (c.molarity|RatID), data=mydsuc, family=poisson)
+               + (c.molarity|RatID), data=data$suc$ctrl, family=poisson)
 summary(Shed)
 
 #Post Hocs & Planned Contrasts
@@ -500,7 +500,7 @@ Shed.emm.m_a
 ### Sucrose Hedonics GLMER (EtOH Group Only: Total EtOH Consumed) ######
 
 ShedTot <-glmer(Total.Hedonic...MM. ~ c.molarity*Age*c.totale 
-                  + (c.molarity|RatID), data=mydsuc.noCTRL, family=poisson)
+                  + (c.molarity|RatID), data=data$suc$no.ctrl, family=poisson)
 summary(ShedTot)
 
 #Post Hocs & Planned Contrasts
@@ -527,7 +527,7 @@ ShedMR <-glmer(Total.Hedonic...MM. ~ c.molarity+Age+c.MAC+c.ROC
                  + Age:c.ROC
                  + c.molarity:Age:c.MAC
                  + c.molarity:Age:c.ROC
-                 + (c.molarity|RatID), data=mydsuc.noCTRL, family=poisson)
+                 + (c.molarity|RatID), data=data$suc$no.ctrl, family=poisson)
 
 # Model did not converge, used code below to extend # of iterations and start from where the previous model left off.
 ss7 <- getME(ShedMR,c("theta","fixef"))
@@ -559,51 +559,47 @@ dev.off()
 
 #Load new dataset made in excel to get rid of additional variables in Substance column. subset(), and select(filter(),cols) will not work for this.
 #Laptop
-mydh2o <- read.csv("C:/Users/Thomas/Google Drive/Grad/Lab/Projects/Phase II Projects - Analysis & Write-up/Masters/Results/Analyses/ABHV2018H2O.csv", na.strings="\"\"")
-#Home computer
-#mydh2o <- read.csv("C:/Users/Kiersten/Google Drive/Grad/Lab/Projects/Phase II Projects - Analysis & Write-up/Masters/Results/Analyses/ABHV2018H2O.csv", na.strings="\"\"")
-View(mydh2o)
+data$h2o$ctrl <- subset(data$raw, Substance == "Water1" | Substance == "Water2")
+View(data$h2o$ctrl)
 
 #Adjust contrasts to sum-to-zero
-contrasts(mydh2o$Substance)=contr.sum(2)
-contrasts(mydh2o$Substance)
+contrasts(data$h2o$ctrl$Substance)=contr.sum(2)
+contrasts(data$h2o$ctrl$Substance)
 
-contrasts(mydh2o$Age)=contr.sum(2)
-contrasts(mydh2o$Age)
+contrasts(data$h2o$ctrl$Age)=contr.sum(2)
+contrasts(data$h2o$ctrl$Age)
 
-contrasts(mydh2o$Condition)=contr.sum(2)
-contrasts(mydh2o$Condition)
+contrasts(data$h2o$ctrl$Condition)=contr.sum(2)
+contrasts(data$h2o$ctrl$Condition)
 
 ##Filter for Consumption Pattern Variables
 library("dplyr", lib.loc="~/R/win-library/3.6")
-mydh2o.noCTRL <- filter(mydh2o, Condition != "CTRL")
-View(mydh2o.noCTRL)
+data$h2o$no.ctrl <- filter(data$h2o$ctrl, Condition != "CTRL")
+View(data$h2o$no.ctrl)
 detach("package:dplyr", unload=TRUE)
-
-##Rescaling
 
 ##Centering
 #center TOTAL.ETOH.Swap.Consumed..g.kg. to avoid issues with variance inflation
-mydh2o.noCTRL$c.totale <- mydh2o.noCTRL$TOTAL.ETOH.Swap.Consumed..g.kg.-mean(mydh2o.noCTRL$TOTAL.ETOH.Swap.Consumed..g.kg.)
+data$h2o$no.ctrl$c.totale <- data$h2o$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg.-mean(data$h2o$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg.)
 #center MAC and ROC for noCTRL subset to avoid issues with variance inflation
-mydh2o.noCTRL$c.MAC <- mydh2o.noCTRL$MAC-mean(mydh2o.noCTRL$MAC)
-mydh2o.noCTRL$c.ROC <- mydh2o.noCTRL$ROC-mean(mydh2o.noCTRL$ROC)
+data$h2o$no.ctrl$c.MAC <- data$h2o$no.ctrl$MAC-mean(data$h2o$no.ctrl$MAC)
+data$h2o$no.ctrl$c.ROC <- data$h2o$no.ctrl$ROC-mean(data$h2o$no.ctrl$ROC)
 
 ###Variable Coding Adjustment###
 
 #Adjust contrasts to sum-to-zero
-contrasts(mydh2o.noCTRL$Substance)=contr.sum(2)
-contrasts(mydh2o.noCTRL$Substance)
+contrasts(data$h2o$no.ctrl$Substance)=contr.sum(2)
+contrasts(data$h2o$no.ctrl$Substance)
 
-contrasts(mydh2o.noCTRL$Age)=contr.sum(2)
-contrasts(mydh2o.noCTRL$Age)
+contrasts(data$h2o$no.ctrl$Age)=contr.sum(2)
+contrasts(data$h2o$no.ctrl$Age)
 
 
 ## WATER AVERSIVES #####
 
 ### Water Aversives GLMER (with EtOH vs CTRL)####
 Havers <-glmer(Total.Aversive ~ Substance*Age*Condition 
-               + (1|RatID), data=mydh2o, family=poisson)
+               + (1|RatID), data=data$h2o$ctrl, family=poisson)
 summary(Havers)
 
 #Post Hocs & Planned Contrasts
@@ -639,7 +635,7 @@ plot(Havers.emm.s_a_c)
 ### Water Aversives GLMER (EtOH Group Only: Total EtOH Consumed) ######
 
 HaversTot <-glmer(Total.Aversive ~ Substance*Age*c.totale 
-                  + (1|RatID), data=mydh2o.noCTRL, family=poisson)
+                  + (1|RatID), data=data$h2o$no.ctrl, family=poisson)
 
 # Model did not converge, used code below to extend # of iterations and start from where the previous model left off.
 ss8 <- getME(HaversTot,c("theta","fixef"))
@@ -684,7 +680,7 @@ HaversMR <-glmer(Total.Aversive ~ Substance+Age+c.MAC+c.ROC
                  + Age:c.ROC
                  + Substance:Age:c.MAC
                  + Substance:Age:c.ROC
-                 + (1|RatID), data=mydh2o.noCTRL, family=poisson)
+                 + (1|RatID), data=data$h2o$no.ctrl, family=poisson)
 
 # Model did not converge, used code below to extend # of iterations and start from where the previous model left off.
 ss9 <- getME(HaversMR,c("theta","fixef"))
@@ -714,7 +710,7 @@ dev.off()
 
 ### Water Hedonics GLMER (with EtOH vs CTRL)####
 Hhed <-glmer(Total.Hedonic...MM. ~ Substance*Age*Condition 
-               + (1|RatID), data=mydh2o, family=poisson)
+               + (1|RatID), data=data$h2o$ctrl, family=poisson)
 summary(Hhed)
 
 #Post Hocs & Planned Contrasts
@@ -731,7 +727,7 @@ plot(Hhed.emm.s_c)
 ### Water Hedonics GLMER (EtOH Group Only: Total EtOH Consumed) ######
 
 HhedTot <-glmer(Total.Hedonic...MM. ~ Substance*Age*c.totale 
-                  + (1|RatID), data=mydh2o.noCTRL, family=poisson)
+                  + (1|RatID), data=data$h2o$no.ctrl, family=poisson)
 summary(HhedTot)
 
 #Post Hocs & Planned Contrasts
