@@ -9,6 +9,10 @@ output: github_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+# DATA BACKGROUND AND STRUCTURE...
+
+blah blah here
+
 # Workspace Setup
 
 ## Install and Load Required Packages
@@ -121,13 +125,13 @@ if (Sys.which("make") == "") {  # Check to see if "make" command from rtools is 
   
   
   print("******** INSTALLATION AND LOADING COMPLETE ********")
-} #end rtools installed == TRUE
+} # end rtools installed == TRUE
 ```
 
 ##Set your working directory
 
 ```{r Working Directory}
-#Set your working directory to your project folder and check that it is correct
+# Set your working directory to your project folder and check that it is correct
 setwd("C:/Users/kieri/Documents/ABHV/")
 getwd()
 ```
@@ -162,8 +166,6 @@ The full data requires various sub-setting to ensure the correct substances are 
 To do this we generate a list called `data` and begin populating it with subsets of the original data. In addition we adjust the contrast coding and scale of some of our variables to help us avoid problems later. I adjust my categorical (factor) variables' contrast coding attributes because I want my GLMER models' categorical variables to be coded like an ANOVA to ease interpretation of the effects. In other words, I want my model's intercept to be at the Grand Mean. Thus, I must recode my categorical variables using sum-to-zero aka contrast coding instead of dummy coding or other types. One group is assigned +1 and the other is assigned -1 and they sum to zero.
 
 ```{r Data Subsetting}
-
-
 data <- list()
 
 # Read in data file with auto-headings and blanks/ N/As set to blank ("") and my categorical or character data read in as the data type "factor"
@@ -321,13 +323,122 @@ To accommodate and store each list object returned by our models I need another 
       * overall
       * total ethanol
       * Mean Alcohol Consumed & Rate of Change
+      
+This is count data and has some missing data due to participant attrition and has a continuous predictor variable that represents my repeated measure (Concentration) since each animal reacted to each concentration of each substance. Therefore a poisson Generalized Linear Mixed Effects Regression (GLMER) is appropriate for analysis. There is some nesting in the structure of the data and for reasons related to understanding for the audience the publication was for I opted to do two separate analyses on this data set instead of properly nesting it. We will use ethanol as an illustrative example because it also has two models that I wanted to compare.
 
-```{r Generating Model List(s)}
+```{r Model and Planned Comparison Lists}
+# List setup ####
+
+## Models ####
 models <- list()
- #will need to use list here
-models$eth <- list()
-models$suc <- list()
+  models$eth  <- list()
+    models$eth$avers  <- list()
+      models$eth$avers$overall  <- list() # Delete
+      models$eth$avers$total.e  <- list() # Delete
+      models$eth$avers$MR1  <- list() # Delete
+      models$eth$avers$MR3  <- list() # Delete
+    models$eth$hedon  <- list()
+      models$eth$hedon$overall  <- list() # Delete
+      models$eth$hedon$total.e  <- list() # Delete
+      models$eth$hedon$MR1  <- list() # Delete
+      models$eth$hedon$MR3  <- list() # Delete
+  models$suc  <- list()
+    models$suc$avers  <- list()
+    models$suc$hedon  <- list()
+  models$h2o  <- list()
+    models$h2o$avers  <- list()
+    models$h2o$hedon  <- list()
+
+## Comparisons ####
+compars <- list()
+  compars$eth  <- list()
+    compars$eth$avers  <- list()
+     compars$eth$hedon  <- list()
+  compars$suc  <- list()
+    compars$suc$avers  <- list()
+    compars$suc$hedon  <- list()
+  compars$h2o  <- list()
+    compars$h2o$avers  <- list()
+    compars$h2o$hedon  <- list()
 ```
+
+
+Now that we have our lists we can start running our models and comparisons and storing them as needed.
+
+### Ethanol
+
+```{r Aversive Responses: Overall Model}
+# Ethanol vs Control (Overall)
+
+  # predictors: full factorial fixed effects of centered concentration, age, and condition
+  models$eth$aversive$overall <- glmer(Total.Aversive ~ c.conc*Age*Condition 
+                                      + (c.conc|RatID), # and the random effects of the intercept (RatID) and the slope of concentration
+                                      data=data$eth$ctrl, 
+                                      family=poisson)
+
+  # Get a summary of our output
+  summary(models$eth$aversive$overall)
+```
+
+Now we need to check to see if our assumption of normally distributed residuals is correct using a simple plot.
+```{r Aversive Responses: Overall Model Residual Normality Check, echo = FALSE}
+# Start by plotting a density function of our model's residuals
+plot(density(residuals(models$eth$aversive$overall)), 
+     main="", xlab="", frame= FALSE)
+# Add normal distribution to the residual plot for comparison to check assumption of normality
+EavMR.m = mean(residuals(models$eth$aversive$overall)) # get the residual mean
+EavMR.std = sqrt(var(residuals(models$eth$aversive$overall))) # get the st dev
+curve(dnorm(x, mean=EavMR.m, sd=EavMR.std), col="darkblue", lwd=2, add=TRUE, yaxt="n") # Generate normal curve
+remove(EavMR.m,EavMR.std) # Declutter workspace
+```
+The blue line is a normal distribution. The black line is our residual distribution. From the graph we can see the residuals are slighly kurtotic (pointier and a bit thinner than a normal curve) but mostly normal. I would say that the assumption of normality has been met. Now, on to interpretation. I have my summary from before, but I need to compare my significant variables. `emmeans` is a convenient package for this. I can look at the means from the model and compare my two levels of my Condition variable to see which direction the difference is in and how large the difference between means is. 
+
+```{r Aversive Responses: Overall Model Planned Comparisons}
+  # Compare significant variables
+  compars$eth$avers$overall <- list() # Create new comparison list for overall model
+  compars$eth$avers$overall$condition <- emmeans(models$eth$aversive$overall, ~ Condition) # Perform comparison of Condition with emmeans
+  
+  # We dont need a comparison from c.conc because we have a direction AND a magnitude on a continuous variable! WOO!
+  
+  summary(compars$eth$avers$overall$condition, type = "response") # get summary in the numerical space of the original variable not the log/Poisson space
+  
+  #Save Workspace
+  save.image("ABHV_workspace.RData")
+
+```
+ I document these numbers, save my workspace and then move on to the next model.
+
+```{r }
+  
+  ## Ethanol Group Only: Total Ethanol Consumed (total.e) ####
+    
+    # predictors: full factorial fixed effects of centered concentration, age, and total ethanol consumed during drinking phase of study
+    models$eth$avers$total.e <- glmer(Total.Aversive ~ c.conc*Age*c.totale 
+                                      + (c.conc|RatID), # and the random effects of the intercept (RatID) and the slope of concentration
+                                      data=data$eth$no.ctrl,
+                                      family=poisson)
+  
+    # Model did not converge. Grab Theta and fixed effects data from model and put into temporary object
+    ss <- getME(models$eth$avers$total.e,c("theta","fixef"))
+    # Extend the number of iterations with optimizer and update model
+    models$eth$avers$total.e <- update(models$eth$avers$total.e,start=ss,control=glmerControl(optCtrl=list(maxfun=2e6))) 
+    
+    # Model converged, get summary of output
+    summary(models$eth$avers$total.e)
+    # Remove temporary object
+    remove(ss)
+    
+    # Compare significant variables
+    compars$eth$avers$total.e <- list() # Create new comparison list for total.e model
+    compars$eth$avers$total.e$age<- emmeans(models$eth$avers$total.e, ~ Age) # Perform comparison of Condition with emmeans
+    summary(compars$eth$avers$total.e$age, type = "response") # get summary in the numerical space of the original variable not the log/Poisson space
+  
+    
+  ## Ethanol Group Only: MAC & ROC with Day 1 drinking (MR1) ####
+    
+    
+```
+
 
 
 
