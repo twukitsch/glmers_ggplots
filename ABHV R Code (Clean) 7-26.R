@@ -169,21 +169,26 @@ contrasts(data$eth$no.ctrl$Condition)
 ## ETHANOL AVERSIVES ANALYSES#####
 
 ### Ethanol Aversives GLMER (with EtOH vs CTRL)####
-models$eth$aversive$overall <-glmer(Total.Aversive ~ c.conc*Age*Condition 
-                  + (c.conc|RatID), data=data$eth$ctrl, family=poisson)
-summary(models$eth$aversive$overall)
+models$eth$avers$overall <- glmer(Total.Aversive ~ c.conc*Age*Condition 
+                  + (c.conc|RatID),
+                  data=data$eth$ctrl,
+                  family=poisson)
+
+summary(models$eth$avers$overall)
 
 #Post Hocs & Planned Contrasts
 
 #Checking to see if Adolescent vs Adult IAE rats were different without correction as this is the only relevant comparison here
 compars$eth$avers$overall <- list() # Create new comparison list for overall model
-compars$eth$avers$overall$condition<- emmeans(Eavers,~ Condition)
+compars$eth$avers$overall$condition <- emmeans(models$eth$avers$overall, ~ Condition)
 summary(compars$eth$avers$overall$condition, type = "response")
 
 ### Ethanol Aversives GLMER (EtOH Group Only: Total EtOH Consumed) ######
 
 models$eth$avers$total.e <-glmer(Total.Aversive ~ c.conc*Age*c.totale 
-               + (c.conc|RatID), data=data$eth$no.ctrl, family=poisson)
+               + (c.conc|RatID),
+               data=data$eth$no.ctrl,
+               family=poisson)
 
 # Model did not converge, used code below to extend # of iterations and start from where the previous model left off.
 ss1 <- getME(models$eth$avers$total.e,c("theta","fixef"))
@@ -273,11 +278,12 @@ dev.off()
 ### Ethanol Hedonics GLMER (with EtOH vs CTRL)####
 models$eth$hedon$overall <-glmer(Total.Hedonic...MM.~c.conc*Age*Condition
                 + (c.conc|RatID), data=data$eth$ctrl, family=poisson) #Either syntax works for Intercept & Slope inclusion
+
 summary(models$eth$hedon$overall)
 
 #Post Hocs & Planned Contrasts
 
-compars$eth$avers$overall <- list() # Create new comparison list for overall model
+compars$eth$hedon$overall <- list() # Create new comparison list for overall model
 # Use emmeans to get means for Conditions and summary to back-transform using 'type="response"'
 compars$eth$hedon$overall$condition <- emmeans(models$eth$hedon$overall,~ Condition)
 summary(compars$eth$hedon$overall$condition, type = "response")
@@ -297,6 +303,8 @@ models$eth$hedon$total.e <- glmer(Total.Hedonic...MM. ~ c.conc*Age*c.totale
 summary(models$eth$hedon$total.e)
 
 #Post Hocs and Planned Contrasts
+
+compars$eth$avers$overall <- list() # Create new comparison list for overall model
 EhedTot.emm.a <- emmeans(models$eth$hedon$total.e,~ Age)
 summary(EhedTot.emm.a, type = "response")
 
