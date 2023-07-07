@@ -169,34 +169,36 @@ contrasts(data$eth$no.ctrl$Condition)
 ## ETHANOL AVERSIVES ANALYSES#####
 
 ### Ethanol Aversives GLMER (with EtOH vs CTRL)####
-Eavers <-glmer(Total.Aversive ~ c.conc*Age*Condition 
+models$eth$aversive$overall <-glmer(Total.Aversive ~ c.conc*Age*Condition 
                   + (c.conc|RatID), data=data$eth$ctrl, family=poisson)
-summary(Eavers)
+summary(models$eth$aversive$overall)
 
 #Post Hocs & Planned Contrasts
 
 #Checking to see if Adolescent vs Adult IAE rats were different without correction as this is the only relevant comparison here
-Eavers.emm.c<- emmeans(Eavers,~ Condition)
-summary(Eavers.emm.c, type = "response")
+compars$eth$avers$overall <- list() # Create new comparison list for overall model
+compars$eth$avers$overall$condition<- emmeans(Eavers,~ Condition)
+summary(compars$eth$avers$overall$condition, type = "response")
 
 ### Ethanol Aversives GLMER (EtOH Group Only: Total EtOH Consumed) ######
 
-EaversTot <-glmer(Total.Aversive ~ c.conc*Age*c.totale 
+models$eth$avers$total.e <-glmer(Total.Aversive ~ c.conc*Age*c.totale 
                + (c.conc|RatID), data=data$eth$no.ctrl, family=poisson)
 
 # Model did not converge, used code below to extend # of iterations and start from where the previous model left off.
-ss1 <- getME(EaversTot,c("theta","fixef"))
-EaversTot <- update(EaversTot,start=ss1,control=glmerControl(optCtrl=list(maxfun=2e6)))
-summary(EaversTot)
+ss1 <- getME(models$eth$avers$total.e,c("theta","fixef"))
+models$eth$avers$total.e <- update(models$eth$avers$total.e,start=ss1,control=glmerControl(optCtrl=list(maxfun=2e6)))
+summary(models$eth$avers$total.e)
 
 #Post Hocs & Planned Concrasts
-EaversTot.emm.a<- emmeans(EaversTot,~ Age)
-summary(EaversTot.emm.a, type = "response")
+compars$eth$avers$total.e <- list() # Create new comparison list for total.e model
+compars$eth$avers$total.e$age<- emmeans(models$eth$avers$total.e, ~ Age) # Perform comparison of Condition with emmeans
+summary(compars$eth$avers$total.e$age, type = "response")
 
 
 ### Ethanol Aversives GLMER (EtOH Group Only: MAC & ROC) ######
 
-EaversMR <-glmer(Total.Aversive ~ c.conc+Age+c.MAC+c.ROC
+models$eth$avers$MR1 <-glmer(Total.Aversive ~ c.conc+Age+c.MAC+c.ROC
                  + c.conc:Age
                  + c.conc:c.MAC
                  + c.conc:c.ROC
@@ -207,31 +209,31 @@ EaversMR <-glmer(Total.Aversive ~ c.conc+Age+c.MAC+c.ROC
                  + (c.conc|RatID), data=data$eth$no.ctrl, family=poisson)
 
 # Model did not converge, used code below to extend # of iterations and start from where the previous model left off.
-ss3 <- getME(EaversMR,c("theta","fixef"))
-EaversMR <- update(EaversMR,start=ss3,control=glmerControl(optCtrl=list(maxfun=2e6)))
-summary(EaversMR)
-vif(EaversMR)
-AIC(EaversMR, EaversTot)
-BIC(EaversMR, EaversTot)
+ss3 <- getME(models$eth$avers$MR1,c("theta","fixef"))
+models$eth$avers$MR1 <- update(models$eth$avers$MR1,start=ss3,control=glmerControl(optCtrl=list(maxfun=2e6)))
+summary(models$eth$avers$MR1)
+vif(models$eth$avers$MR1)
+AIC(models$eth$avers$MR1, models$eth$avers$total.e)
+BIC(models$eth$avers$MR1, models$eth$avers$total.e)
 
 #Make and save residual distribution plot
 #make PNG file
 png("EaversMR Res Plot.png", width = 300, height = 300)
-#plot residual density function
-plot(density(residuals(EaversMR)), 
+# Start by plotting a density function of model's residuals
+plot(density(residuals(models$eth$avers$MR1)), 
      main="", xlab="", frame= FALSE)
-#Add normal distribution to the residual plot for comparison to check assumption of normality
-EaversMR.res = residuals(EaversMR)
-EavMR.m = mean(EaversMR.res)
-EavMR.std = sqrt(var(EaversMR.res))
-curve(dnorm(x, mean=EavMR.m, sd=EavMR.std), col="darkblue", lwd=2, add=TRUE, yaxt="n")
+# Add normal distribution to the residual plot for comparison to check assumption of normality
+MEAN = mean(residuals(models$eth$avers$MR1)) # get the residual mean
+STDEV = sqrt(var(residuals(models$eth$avers$MR1))) # get the st dev
+curve(dnorm(x, mean=MEAN, sd=STDEV), col="darkblue", lwd=2, add=TRUE, yaxt="n") # Generate normal curve
+remove(MEAN,STDEV)
 #close the file
 dev.off()
 
 
 ### Ethanol Aversives GLMER (EtOH Group Only: MAC3 & ROC3) ######
 
-EaversMR3 <-glmer(Total.Aversive ~ c.conc+Age+c.MAC3+c.ROC3
+models$eth$avers$MR3 <-glmer(Total.Aversive ~ c.conc+Age+c.MAC3+c.ROC3
                  + c.conc:Age
                  + c.conc:c.MAC3
                  + c.conc:c.ROC3
@@ -242,24 +244,26 @@ EaversMR3 <-glmer(Total.Aversive ~ c.conc+Age+c.MAC3+c.ROC3
                  + (c.conc|RatID), data=data$eth$no.ctrl, family=poisson)
 
 # Model did not converge, used code below to extend # of iterations and start from where the previous model left off.
-ss12 <- getME(EaversMR3,c("theta","fixef"))
-EaversMR3 <- update(EaversMR3,start=ss12,control=glmerControl(optCtrl=list(maxfun=2e9)))
-summary(EaversMR3)
-vif(EaversMR3)
-AIC(EaversMR3, EaversMR, EaversTot)
-BIC(EaversMR3, EaversMR, EaversTot)
+ss <- getME(models$eth$avers$MR3, c("theta","fixef"))
+models$eth$avers$MR3 <- update(models$eth$avers$MR3,start=ss,control=glmerControl(optCtrl=list(maxfun=2e9)))
+remove(ss)
+summary(models$eth$avers$MR3)
+
+vif(models$eth$avers$MR3)
+AIC(models$eth$avers$MR3, models$eth$avers$MR1, models$eth$avers$total.e)
+BIC(models$eth$avers$MR3, models$eth$avers$MR1, models$eth$avers$total.e)
 
 #Make and save residual distribution plot
 #make PNG file
 png("EaversMR3 Res Plot.png", width = 300, height = 300)
-#plot residual density function
-plot(density(residuals(EaversMR3)), 
+# Start by plotting a density function of model's residuals
+plot(density(residuals(models$eth$avers$MR3)), 
      main="", xlab="", frame= FALSE)
-#Add normal distribution to the residual plot for comparison to check assumption of normality
-EaversMR3.res = residuals(EaversMR3)
-EavMR3.m = mean(EaversMR3.res)
-EavMR3.std = sqrt(var(EaversMR3.res))
-curve(dnorm(x, mean=EavMR3.m, sd=EavMR3.std), col="darkblue", lwd=2, add=TRUE, yaxt="n")
+# Add normal distribution to the residual plot for comparison to check assumption of normality
+MEAN = mean(residuals(models$eth$avers$MR3)) # get the residual mean
+STDEV = sqrt(var(residuals(models$eth$avers$MR3))) # get the st dev
+curve(dnorm(x, mean=MEAN, sd=STDEV), col="darkblue", lwd=2, add=TRUE, yaxt="n") # Generate normal curve
+remove(MEAN,STDEV)
 #close the file
 dev.off()
 
@@ -267,29 +271,33 @@ dev.off()
 ## ETHANOL HEDONICS ######
 
 ### Ethanol Hedonics GLMER (with EtOH vs CTRL)####
-Ehed <-glmer(Total.Hedonic...MM.~c.conc*Age*Condition
+models$eth$hedon$overall <-glmer(Total.Hedonic...MM.~c.conc*Age*Condition
                 + (c.conc|RatID), data=data$eth$ctrl, family=poisson) #Either syntax works for Intercept & Slope inclusion
-summary(Ehed)
+summary(models$eth$hedon$overall)
 
 #Post Hocs & Planned Contrasts
 
-#Use emmeans to get means for Conditions and summary toe back-transform using 'type="response"'
-Ehed.emm.c <- emmeans(Ehed,~ Condition)
-summary(Ehed.emm.c, type = "response")
+compars$eth$avers$overall <- list() # Create new comparison list for overall model
+# Use emmeans to get means for Conditions and summary to back-transform using 'type="response"'
+compars$eth$hedon$overall$condition <- emmeans(models$eth$hedon$overall,~ Condition)
+summary(compars$eth$hedon$overall$condition, type = "response")
 
-#Getting bs for Condition. Remember that c.conc was rescaled so move the decimal to the left 2 times.
-Ehed.emm.c_c <- emtrends(Ehed, ~c.conc*Condition, var="c.conc")
-Ehed.emm.c_c
+# Getting bs for Condition. Remember that c.conc was rescaled so move the decimal to the left 2 times.
+compars$eth$hedon$overall$conc.x.cond <- emtrends(models$eth$hedon$overall, ~c.conc*Condition, var="c.conc")
+compars$eth$hedon$overall$conc.x.cond
 
 
 ### Ethanol Hedonics GLMER (EtOH Group Only: Total EtOH Consumed) ######
 
-EhedTot <-glmer(Total.Hedonic...MM. ~ c.conc*Age*c.totale 
-                  + (c.conc|RatID), data=data$eth$no.ctrl, family=poisson)
-summary(EhedTot)
+models$eth$hedon$total.e <- glmer(Total.Hedonic...MM. ~ c.conc*Age*c.totale 
+                                + (c.conc|RatID),
+                                data=data$eth$no.ctrl,
+                                family=poisson)
+
+summary(models$eth$hedon$total.e)
 
 #Post Hocs and Planned Contrasts
-EhedTot.emm.a <- emmeans(EhedTot,~ Age)
+EhedTot.emm.a <- emmeans(models$eth$hedon$total.e,~ Age)
 summary(EhedTot.emm.a, type = "response")
 
 

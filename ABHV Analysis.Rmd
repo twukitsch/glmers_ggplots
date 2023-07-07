@@ -142,7 +142,7 @@ To keep an organized and uncluttered workspace, I use a set of hierarchical list
 We have the following object categories with most analyses:
 * data
 * models
-* comparisons
+* comparisons (abbv. "compars")
 * plots
 
 In this specific set of analyses we have a number of needs that determine the objects in each category.
@@ -289,7 +289,7 @@ save.image("ABHV_workspace.RData")
 
 ```
 
-## Models (Analyses)
+## Models (Analyses) & 
 
 To accommodate and store each list object returned by our models I need another hierarchical list object with a similar structure to the data above. However, there is more nuance because I am performing analyses for hedonic and aversive responses and, for each of those, I have analyses that involve different variables that were calculated from modeling other related data (total ethanol, MR, and MR3). So I will need a different list structure, and I may want to generate the list structure in advance so I can populate it with a list. It should look something like this:
 
@@ -353,7 +353,7 @@ models <- list()
 compars <- list()
   compars$eth  <- list()
     compars$eth$avers  <- list()
-     compars$eth$hedon  <- list()
+    compars$eth$hedon  <- list()
   compars$suc  <- list()
     compars$suc$avers  <- list()
     compars$suc$hedon  <- list()
@@ -371,32 +371,34 @@ Now that we have our lists we can start running our models and comparisons and s
 # Ethanol vs Control (Overall)
 
   # predictors: full factorial fixed effects of centered concentration, age, and condition
-  models$eth$aversive$overall <- glmer(Total.Aversive ~ c.conc*Age*Condition 
+  models$eth$avers$overall <- glmer(Total.Aversive ~ c.conc*Age*Condition 
                                       + (c.conc|RatID), # and the random effects of the intercept (RatID) and the slope of concentration
                                       data=data$eth$ctrl, 
                                       family=poisson)
 
   # Get a summary of our output
-  summary(models$eth$aversive$overall)
+  summary(models$eth$avers$overall)
 ```
 
 Now we need to check to see if our assumption of normally distributed residuals is correct using a simple plot.
+
 ```{r Aversive Responses: Overall Model Residual Normality Check, echo = FALSE}
 # Start by plotting a density function of our model's residuals
-plot(density(residuals(models$eth$aversive$overall)), 
+plot(density(residuals(models$eth$avers$overall)), 
      main="", xlab="", frame= FALSE)
 # Add normal distribution to the residual plot for comparison to check assumption of normality
-EavMR.m = mean(residuals(models$eth$aversive$overall)) # get the residual mean
-EavMR.std = sqrt(var(residuals(models$eth$aversive$overall))) # get the st dev
-curve(dnorm(x, mean=EavMR.m, sd=EavMR.std), col="darkblue", lwd=2, add=TRUE, yaxt="n") # Generate normal curve
-remove(EavMR.m,EavMR.std) # Declutter workspace
+MEAN = mean(residuals(models$eth$avers$overall)) # get the residual mean
+STDEV = sqrt(var(residuals(models$eth$avers$overall))) # get the st dev
+curve(dnorm(x, mean=MEAN, sd=STDEV), col="darkblue", lwd=2, add=TRUE, yaxt="n") # Generate normal curve
+remove(MEAN,STDEV) # Declutter workspace
 ```
+
 The blue line is a normal distribution. The black line is our residual distribution. From the graph we can see the residuals are slighly kurtotic (pointier and a bit thinner than a normal curve) but mostly normal. I would say that the assumption of normality has been met. Now, on to interpretation. I have my summary from before, but I need to compare my significant variables. `emmeans` is a convenient package for this. I can look at the means from the model and compare my two levels of my Condition variable to see which direction the difference is in and how large the difference between means is. 
 
 ```{r Aversive Responses: Overall Model Planned Comparisons}
   # Compare significant variables
   compars$eth$avers$overall <- list() # Create new comparison list for overall model
-  compars$eth$avers$overall$condition <- emmeans(models$eth$aversive$overall, ~ Condition) # Perform comparison of Condition with emmeans
+  compars$eth$avers$overall$condition <- emmeans(models$eth$avers$overall, ~ Condition) # Perform comparison of Condition with emmeans
   
   # We dont need a comparison from c.conc because we have a direction AND a magnitude on a continuous variable! WOO!
   
@@ -406,43 +408,146 @@ The blue line is a normal distribution. The black line is our residual distribut
   save.image("ABHV_workspace.RData")
 
 ```
- I document these numbers, save my workspace and then move on to the next model.
 
-```{r }
+I document these numbers, save my workspace and then move on to the next model.
+
+```{r Aversive Responses: Total Ethanol}
+
+# Ethanol Group Only: Total Ethanol Consumed (total.e)
   
-  ## Ethanol Group Only: Total Ethanol Consumed (total.e) ####
-    
-    # predictors: full factorial fixed effects of centered concentration, age, and total ethanol consumed during drinking phase of study
-    models$eth$avers$total.e <- glmer(Total.Aversive ~ c.conc*Age*c.totale 
-                                      + (c.conc|RatID), # and the random effects of the intercept (RatID) and the slope of concentration
-                                      data=data$eth$no.ctrl,
-                                      family=poisson)
+  # predictors: full factorial fixed effects of centered concentration, age, and total ethanol consumed during drinking phase of study
+  models$eth$avers$total.e <- glmer(Total.Aversive ~ c.conc*Age*c.totale 
+                                    + (c.conc|RatID), # and the random effects of the intercept (RatID) and the slope of concentration
+                                    data=data$eth$no.ctrl,
+                                    family=poisson)
+
+  # Model did not converge. Grab Theta and fixed effects data from model and put into temporary object
+  ss <- getME(models$eth$avers$total.e,c("theta","fixef"))
+  # Extend the number of iterations with optimizer and update model
+  models$eth$avers$total.e <- update(models$eth$avers$total.e,start=ss,control=glmerControl(optCtrl=list(maxfun=2e6))) 
   
-    # Model did not converge. Grab Theta and fixed effects data from model and put into temporary object
-    ss <- getME(models$eth$avers$total.e,c("theta","fixef"))
-    # Extend the number of iterations with optimizer and update model
-    models$eth$avers$total.e <- update(models$eth$avers$total.e,start=ss,control=glmerControl(optCtrl=list(maxfun=2e6))) 
-    
-    # Model converged, get summary of output
-    summary(models$eth$avers$total.e)
-    # Remove temporary object
-    remove(ss)
-    
+  # Model converged, get summary of output
+  summary(models$eth$avers$total.e)
+  # Remove temporary object to declutter workspace
+  remove(ss)
+```
+
+Again, before I begin interpreting, I need to check to see if our assumption of normally distributed residuals is correct using a plot of probability density.
+
+```{r Aversive Responses: Total Ethanol Residual Normality Check, echo = FALSE}
+# Start by plotting a density function of our model's residuals
+plot(density(residuals(models$eth$avers$total.e)), 
+     main="", xlab="", frame= FALSE)
+# Add normal distribution to the residual plot for comparison to check assumption of normality
+MEAN = mean(residuals(models$eth$avers$total.e)) # get the residual mean
+STDEV = sqrt(var(residuals(models$eth$avers$total.e))) # get the st dev
+curve(dnorm(x, mean=MEAN, sd=STDEV), col="darkblue", lwd=2, add=TRUE, yaxt="n") # Generate normal curve
+remove(MEAN,STDEV)
+```
+
+Again, the blue line is a normal distribution. The black line is our residual distribution. From the graph we can see the residuals are, again, slightly kurtotic but mostly normal. I would say that the assumption of normality has been met her as well. Now, on to interpretation. I need to look at the means from the model and compare my two levels of my Condition variable to see which direction and how large the difference is.
+
+```{r Aversive Responses: Total Ethanol Planned Comparisons}
     # Compare significant variables
     compars$eth$avers$total.e <- list() # Create new comparison list for total.e model
     compars$eth$avers$total.e$age<- emmeans(models$eth$avers$total.e, ~ Age) # Perform comparison of Condition with emmeans
     summary(compars$eth$avers$total.e$age, type = "response") # get summary in the numerical space of the original variable not the log/Poisson space
-  
     
-  ## Ethanol Group Only: MAC & ROC with Day 1 drinking (MR1) ####
-    
-    
+      #Save Workspace
+  save.image("ABHV_workspace.RData")
 ```
 
+Copy down the data you need, save, rinse, and repeat...
+    
+```{r Aversive Responses: MAC and RoC (MR1)}
+  # predictors: note that these are not the full factorial fixed effects. I'm not interested in the higher level interactions here.
+models$eth$avers$MR1 <-glmer(Total.Aversive ~ c.conc+Age+c.MAC+c.ROC
+                 + c.conc:Age
+                 + c.conc:c.MAC
+                 + c.conc:c.ROC
+                 + Age:c.MAC
+                 + Age:c.ROC
+                 + c.conc:Age:c.MAC
+                 + c.conc:Age:c.ROC
+                 + (c.conc|RatID), data=data$eth$no.ctrl, family=poisson)
 
+# Model did not converge, used code below to extend # of iterations and start from where the previous model left off.
+ss <- getME(models$eth$avers$MR1,c("theta","fixef"))
+models$eth$avers$MR1 <- update(models$eth$avers$MR1,start=ss,control=glmerControl(optCtrl=list(maxfun=2e6)))
+summary(models$eth$avers$MR1)
+remove(ss)
 
+# Check variance inflation factor (VIF)
+vif(models$eth$avers$MR1)
 
+# Compare with the previous model
+AIC(models$eth$avers$MR1, models$eth$avers$total.e)
+BIC(models$eth$avers$MR1, models$eth$avers$total.e)
 
+```
+Again, check normality of residuals
+```{r Aversive Responses: MAC and RoC (MR1) Residual Normality Check, echo = FALSE}
+# Start by plotting a density function of model's residuals
+plot(density(residuals(models$eth$avers$MR1)), 
+     main="", xlab="", frame= FALSE)
+# Add normal distribution to the residual plot for comparison to check assumption of normality
+MEAN = mean(residuals(models$eth$avers$MR1)) # get the residual mean
+STDEV = sqrt(var(residuals(models$eth$avers$MR1))) # get the st dev
+curve(dnorm(x, mean=MEAN, sd=STDEV), col="darkblue", lwd=2, add=TRUE, yaxt="n") # Generate normal curve
+remove(MEAN,STDEV)
+
+#Save Workspace
+save.image("ABHV_workspace.RData")
+```
+
+Similar to previous residuals. No planned comparisons here. This model was not selected for interpretation (considerably higher BIC), so I didn't perform any. Then we repeat for the 4th model which excludes the first day of drinking from calculations of MAC and RoC.
+
+```{r Aversive Responses: MAC and RoC (MR3)}
+  # predictors: note that these are not the full factorial fixed effects. I'm not interested in the higher level interactions here.
+models$eth$avers$MR3 <-glmer(Total.Aversive ~ c.conc+Age+c.MAC3+c.ROC3
+                 + c.conc:Age
+                 + c.conc:c.MAC3
+                 + c.conc:c.ROC3
+                 + Age:c.MAC3
+                 + Age:c.ROC3
+                 + c.conc:Age:c.MAC3
+                 + c.conc:Age:c.ROC3
+                 + (c.conc|RatID), data=data$eth$no.ctrl, family=poisson)
+
+# Model did not converge, used code below to extend # of iterations and start from where the previous model left off.
+ss <- getME(models$eth$avers$MR3, c("theta","fixef"))
+models$eth$avers$MR3 <- update(models$eth$avers$MR3,start=ss,control=glmerControl(optCtrl=list(maxfun=2e9)))
+remove(ss)
+summary(models$eth$avers$MR3)
+
+vif(models$eth$avers$MR3)
+AIC(models$eth$avers$MR3, models$eth$avers$MR1, models$eth$avers$total.e)
+BIC(models$eth$avers$MR3, models$eth$avers$MR1, models$eth$avers$total.e)
+```
+
+Again, check normality of residuals
+
+```{r Aversive Responses: MAC and RoC (MR3) Residual Normality Check, echo = FALSE}
+# Start by plotting a density function of model's residuals
+plot(density(residuals(models$eth$avers$MR3)), 
+     main="", xlab="", frame= FALSE)
+# Add normal distribution to the residual plot for comparison to check assumption of normality
+MEAN = mean(residuals(models$eth$avers$MR3)) # get the residual mean
+STDEV = sqrt(var(residuals(models$eth$avers$MR3))) # get the st dev
+curve(dnorm(x, mean=MEAN, sd=STDEV), col="darkblue", lwd=2, add=TRUE, yaxt="n") # Generate normal curve
+remove(MEAN,STDEV)
+
+#Save Workspace
+save.image("ABHV_workspace.RData")
+```
+
+And again, things look pretty normal. This one also has no planned comparisons and was not selected for the same reason as the previous. The remaining model runs are not shown here for brevity.
+
+# Plotting/Graphing GLMERs with ggplot2
+
+```{r }
+
+```
 
 
 In the end, our specific lists of objects with abbreviations looks like this:
