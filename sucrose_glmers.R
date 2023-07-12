@@ -107,14 +107,14 @@
       summary(compars$suc$hedon$overall$molar.x.age)
     
     #Make and save residual distribution plot
-      #make PNG file
+      # make PNG file
       png("Shed Residual Probability Density.png", width = 300, height = 300)
-      #plot residual density function
+      # plot residual density function
       plot(density(residuals(models$suc$hedon$overall)), 
            main = "",
            xlab = "",
            frame = FALSE)
-      #Add normal distribution to the residual plot for comparison to check assumption of normality
+      # Add normal distribution to the residual plot for comparison to check assumption of normality
       MEAN = mean(residuals(models$suc$hedon$overall))
       STDEV = sqrt(var(residuals(models$suc$hedon$overall)))
       curve(dnorm(x, mean = MEAN, sd = STDEV),
@@ -123,7 +123,7 @@
             add = TRUE,
             yaxt = "n")
       remove(MEAN, STDEV)
-      #close the file
+      # close the file
       dev.off()
 
 
@@ -152,14 +152,14 @@
       
       
     #Make and save residual distribution plot
-      #make PNG file
+      # make PNG file
       png("ShedTot Residual Probability Density.png", width = 300, height = 300)
-      #plot residual density function
+      # plot residual density function
       plot(density(residuals(models$suc$hedon$total.e)), 
            main = "",
            xlab = "",
            frame = FALSE)
-      #Add normal distribution to the residual plot for comparison to check assumption of normality
+      # Add normal distribution to the residual plot for comparison to check assumption of normality
       MEAN = mean(residuals(models$suc$hedon$total.e))
       STDEV = sqrt(var(residuals(models$suc$hedon$total.e)))
       curve(dnorm(x, mean = MEAN, sd = STDEV),
@@ -168,7 +168,7 @@
             add = TRUE,
             yaxt = "n")
       remove(MEAN, STDEV)
-      #close the file
+      # close the file
       dev.off()
       
 

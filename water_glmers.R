@@ -1,75 +1,115 @@
-## SUCROSE AVERSIVES ANALYSES####
+## WATER AVERSIVES ANALYSES####
 
-  ### Sucrose Aversives GLMER (with EtOH vs CTRL)####
-    models$suc$avers$overall <- glmer(Total.Aversive ~ c.molarity*Age*Condition 
-                                      + (c.molarity|RatID),
-                                      data = data$suc$ctrl,
+  ### Water Aversives GLMER (with EtOH vs CTRL)####
+    models$h2o$avers$overall <- glmer(Total.Aversive ~ Substance*Age*Condition 
+                                      + (1|RatID), # Intercept Only
+                                      data = data$h2o$ctrl,
                                       family = poisson)
+
+    summary(models$h2o$avers$overall)
+    
+    # Post Hocs & Planned Concrasts
+      compars$h2o$avers$overall <- list()
+      
+      # Get means of Substance
+        compars$h2o$avers$overall$subst <- emmeans(models$h2o$avers$overall,
+                                                   ~ Substance)
+        summary(compars$h2o$avers$overall$subst, type = "response")
+      # Get means of Condition
+        compars$h2o$avers$overall$cond <- emmeans(models$h2o$avers$overall,
+                                                  ~ Condition)
+        summary(compars$h2o$avers$overall$cond, type = "response")
+      # Get means of Substance*Age interaction
+        compars$h2o$avers$overall$subst.x.age <- emmeans(models$h2o$avers$overall,
+                                                         ~ Substance
+                                                         * Age)
+        summary(compars$h2o$avers$overall$subst.x.age, type = "response")
+      # Get means of Substance*Condition interaction
+        compars$h2o$avers$overall$subst.x.cond <- emmeans(models$h2o$avers$overall,
+                                                   ~ Substance
+                                                   * Condition)
+        summary(compars$h2o$avers$overall$subst.x.cond, type = "response")
+      # Get means of Substance*Age*Condition interaction
+        compars$h2o$avers$overall$threeway <- emmeans(models$h2o$avers$overall,
+                                                      ~ Substance
+                                                      * Age
+                                                      * Condition)
+        summary(compars$h2o$avers$overall$threeway, type = "response")
+        # Get pairwise comparisons with no familywise adjustment
+          compars$h2o$avers$overall$pairs3way <- pairs(compars$h2o$avers$overall$threeway, 
+                                           adjust = "None") # "tukey" will make tukey adjustment, same for "bonferroni"
+          compars$h2o$avers$overall$pairs3way
+    
+    # Make and save residual distribution plot
+      # make PNG file
+      png("Wavers Residual Probability Density.png", width = 300, height = 300)
+      # plot residual density function
+      plot(density(residuals(models$h2o$avers$overall)), 
+           main = "",
+           xlab = "", 
+           frame = FALSE)
+      # Add normal distribution to the residual plot for comparison to check assumption of normality
+      MEAN = mean(residuals(models$h2o$avers$overall))
+      STDEV = sqrt(var(residuals(models$h2o$avers$overall)))
+      curve(dnorm(x, mean = MEAN, sd = STDEV),
+            col = "darkblue",
+            lwd = 2,
+            add = TRUE,
+            yaxt = "n")
+      remove(MEAN, STDEV) # Clean workspace
+      # close the file
+      dev.off()
+      
+      
+  ### Water Aversives GLMER (EtOH Group Only: Total EtOH Consumed) ####
+    models$h2o$avers$total.e <- glmer(Total.Aversive ~ Substance*Age*c.totale 
+                                      + (1|RatID), # Intercept Only
+                                      data = data$h2o$no.ctrl,
+                                      family = poisson)
+ 
     # Model did not converge, used code below to extend # of iterations and start from where the previous model left off.
-      ss <- getME(models$suc$avers$overall, c("theta", "fixef"))
-      models$suc$avers$overall <- update(models$suc$avers$overall,
+      ss <- getME(models$h2o$avers$total.e, c("theta", "fixef"))
+      models$h2o$avers$total.e <- update(models$h2o$avers$total.e,
                                          start = ss,
                                          control = glmerControl(optCtrl = list(maxfun = 2e6)))
       remove(ss) # Clean workspace
-      
-    summary(models$suc$avers$overall)
-      
-    # Make and save residual distribution plot
-      # make PNG file
-      png("Savers Residual Probability Density.png", width = 300, height = 300)
-      # plot residual density function
-      plot(density(residuals(models$suc$avers$overall)), 
-           main = "",
-           xlab = "", 
-           frame = FALSE)
-      # Add normal distribution to the residual plot for comparison to check assumption of normality
-      MEAN = mean(residuals(models$suc$avers$overall))
-      STDEV = sqrt(var(residuals(models$suc$avers$overall)))
-      curve(dnorm(x, mean = MEAN, sd = STDEV),
-            col = "darkblue",
-            lwd = 2,
-            add = TRUE,
-            yaxt = "n")
-      remove(MEAN, STDEV) # Clean workspace
-      # close the file
-      dev.off()
-      
-      
-  ### Sucrose Aversives GLMER (EtOH Group Only: Total EtOH Consumed) ####
-    models$suc$avers$total.e <- glmer(Total.Aversive ~ c.molarity*Age*c.totale 
-                                      + (c.molarity|RatID),
-                                      data = data$suc$no.ctrl,
-                                      family = poisson)
- 
-    # Model did not converge, used code below to extend # of iterations and start from where the previous model left off.
-      ss <- getME(models$suc$avers$total.e, c("theta", "fixef"))
-      models$suc$avers$total.e <- update(models$suc$avers$total.e,
-                                         start = ss,
-                                         control = glmerControl(optCtrl = list(maxfun = 2e6)))
-        remove(ss) # Clean workspace
    
-    summary(models$suc$avers$total.e)
+    summary(models$h2o$avers$total.e)
  
     # Post Hocs & Planned Concrasts
-      compars$suc$avers$total.e <- list() # Create new comparison list for overall model
-      # Get the slopes (trends) for each level of age
-      compars$suc$avers$total.e$molar.x.age <- emtrends(models$suc$avers$total.e,
-                                                        ~ Age,
-                                                        var = "c.molarity")
-      
-      summary(compars$suc$avers$total.e$molar.x.age)
+      compars$h2o$avers$total.e <- list() # Create new comparison list for overall model
+      # Get means of Substance*Age interaction
+        compars$h2o$avers$total.e$subst.x.age <- emmeans(models$h2o$avers$total.e,
+                                                         ~ Substance
+                                                         * Age)
+        summary(compars$h2o$avers$total.e$subst.x.age, type = "response")
+      # Get means of Substance*Total Ethanol Consumed interaction
+        compars$h2o$avers$total.e$subst.x.totale <- emtrends(models$h2o$avers$total.e,
+                                                   ~ Substance,
+                                                   var = "c.totale")
+        summary(compars$h2o$avers$total.e$subst.x.totale)
+      # Get means of Substance*Age*Condition interaction
+        compars$h2o$avers$total.e$threeway <- emtrends(models$h2o$avers$total.e,
+                                                      ~ Substance
+                                                      * Age,
+                                                      var = "c.totale")
+        summary(compars$h2o$avers$total.e$threeway)
+        # Get pairwise comparisons with no familywise adjustment
+          compars$h2o$avers$total.e$pairs3way <- pairs(compars$h2o$avers$total.e$threeway, 
+                                           adjust = "None") # "tukey" will make tukey adjustment, same for "bonferroni"
+          compars$h2o$avers$total.e$pairs3way
       
     # Make and save residual distribution plot
       # make PNG file
-      png("SaversTot Residual Probability Density.png", width = 300, height = 300)
+      png("WaversTot Residual Probability Density.png", width = 300, height = 300)
       # plot residual density function
-      plot(density(residuals(models$suc$avers$total.e)), 
+      plot(density(residuals(models$h2o$avers$total.e)), 
            main = "",
            xlab = "", 
            frame = FALSE)
       # Add normal distribution to the residual plot for comparison to check assumption of normality
-      MEAN = mean(residuals(models$suc$avers$total.e))
-      STDEV = sqrt(var(residuals(models$suc$avers$total.e)))
+      MEAN = mean(residuals(models$h2o$avers$total.e))
+      STDEV = sqrt(var(residuals(models$h2o$avers$total.e)))
       curve(dnorm(x, mean = MEAN, sd = STDEV),
             col = "darkblue",
             lwd = 2,
@@ -80,88 +120,93 @@
       dev.off()
 
 
-## SUCROSE HEDONIC ANALYSES ####
+## WATER HEDONIC ANALYSES ####
 
-  ### Sucrose Hedonics GLMER (with EtOH vs CTRL)####
-    models$suc$hedon$overall <- glmer(Total.Hedonic...MM. ~ c.molarity*Age*Condition
-                                      + (c.molarity|RatID),
-                                      data = data$suc$ctrl,
+  ### Water Hedonics GLMER (with EtOH vs CTRL)####
+    models$h2o$hedon$overall <- glmer(Total.Hedonic...MM. ~ Substance*Age*Condition
+                                      + (1|RatID),
+                                      data = data$h2o$ctrl,
                                       family = poisson)
   
-    summary(models$suc$hedon$overall)
+    summary(models$h2o$hedon$overall)
  
     # Post Hocs & Planned Contrasts
-      compars$suc$hedon$overall <- list() # Create new comparison list for overall model
-      # Use emmeans to get means for Age and summary to back-transform using 'type = "response"'
-      compars$suc$hedon$overall$age <- emmeans(models$suc$hedon$overall, ~ Age)
-      summary(compars$suc$hedon$overall$age, type = "response")
-      
-      # Getting b's for Age. Remember that c.molarity was rescaled so move the decimal to the left 2 times.
-      compars$suc$hedon$overall$molar.x.age <- emtrends(models$suc$hedon$overall,
-                                                        ~ Age,
-                                                        var = "c.molarity")
-      # If we wanted these slopes in terms of the response variable AT THE GRAND
-      # MEAN we can add the `regrid = "response"` argument
-      # However, this is frequently NOT what you want when you graph the log 
-      # curve or talk about log change across a response variable
-      summary(compars$suc$hedon$overall$molar.x.age)
+      # Get means of Substance
+        compars$h2o$hedon$overall$subst <- emmeans(models$h2o$hedon$overall,
+                                                   ~ Substance)
+        summary(compars$h2o$hedon$overall$subst, type = "response")
+      # Get means of Substance*Condition interaction
+        compars$h2o$hedon$overall$subst.x.cond <- emmeans(models$h2o$hedon$overall,
+                                                          ~ Substance
+                                                          * Condition)
+        summary(compars$h2o$hedon$overall$subst.x.cond, type = "response")
+        # Get pairwise comparisons with no familywise adjustment
+          compars$h2o$hedon$overall$pairs.subst.x.cond <- pairs(compars$h2o$hedon$overall$subst.x.cond, 
+                                                       adjust = "None") # "tukey" will make Tukey adjustment, same for "bonferroni"
+          compars$h2o$hedon$overall$pairs.subst.x.cond
     
-    #Make and save residual distribution plot
-      #make PNG file
-      png("Shed Residual Probability Density.png", width = 300, height = 300)
-      #plot residual density function
-      plot(density(residuals(models$suc$hedon$overall)), 
+    # Make and save residual distribution plot
+      # make PNG file
+      png("Hhed Residual Probability Density.png", width = 300, height = 300)
+      # plot residual density function
+      plot(density(residuals(models$h2o$hedon$overall)), 
            main = "",
            xlab = "",
            frame = FALSE)
-      #Add normal distribution to the residual plot for comparison to check assumption of normality
-      MEAN = mean(residuals(models$suc$hedon$overall))
-      STDEV = sqrt(var(residuals(models$suc$hedon$overall)))
+      # Add normal distribution to the residual plot for comparison to check assumption of normality
+      MEAN = mean(residuals(models$h2o$hedon$overall))
+      STDEV = sqrt(var(residuals(models$h2o$hedon$overall)))
       curve(dnorm(x, mean = MEAN, sd = STDEV),
             col = "darkblue",
             lwd = 2,
             add = TRUE,
             yaxt = "n")
       remove(MEAN, STDEV)
-      #close the file
+      # close the file
       dev.off()
 
 
-  ### Sucrose Hedonics GLMER (EtOH Group Only: Total EtOH Consumed) ######
-    models$suc$hedon$total.e <- glmer(Total.Hedonic...MM. ~ c.molarity*Age*c.totale 
-                                      + (c.molarity|RatID),
-                                      data = data$suc$no.ctrl,
+  ### Water Hedonics GLMER (EtOH Group Only: Total EtOH Consumed) ######
+    models$h2o$hedon$total.e <- glmer(Total.Hedonic...MM. ~ Substance*Age*c.totale 
+                                      + (1|RatID),
+                                      data = data$h2o$no.ctrl,
                                       family = poisson)
   
-    summary(models$suc$hedon$total.e)
+    summary(models$h2o$hedon$total.e)
  
     # Post Hocs and Planned Contrasts
-      compars$suc$hedon$total.e <- list() # Create new comparison list for overall model
-      compars$suc$hedon$total.e$age <- emmeans(models$suc$hedon$total.e, ~ Age) # Look at Age means
-      summary(compars$suc$hedon$total.e$age, type = "response") # Mean estimates at GRAND MEAN
+      compars$h2o$hedon$total.e <- list() # Create new comparison list for overall model
+      # Get means of Substance
+      compars$h2o$hedon$total.e$subst <- emmeans(models$h2o$hedon$total.e,
+                                                       ~ Substance)
+      summary(compars$h2o$hedon$total.e$subst, type = "response")
+      # Get means of Substance*Total Ethanol Consumed interaction
+      compars$h2o$hedon$total.e$subst.x.totale <- emtrends(models$h2o$hedon$total.e,
+                                                           ~ Substance,
+                                                           var = "c.totale")
+      summary(compars$h2o$hedon$total.e$subst.x.totale)
+      # Get means of Substance*Age*Condition interaction
+      compars$h2o$hedon$total.e$threeway <- emtrends(models$h2o$hedon$total.e,
+                                                     ~ Substance
+                                                     * Age,
+                                                     var = "c.totale")
+      summary(compars$h2o$hedon$total.e$threeway)
+      # Get pairwise comparisons with no familywise adjustment
+      compars$h2o$hedon$total.e$pairs3way <- pairs(compars$h2o$hedon$total.e$threeway, 
+                                                   adjust = "None") # "tukey" will make tukey adjustment, same for "bonferroni"
+      compars$h2o$hedon$total.e$pairs3way
       
-      # Getting b's for Age. Remember that c.molarity was rescaled so move the decimal to the left 2 times.
-      compars$suc$hedon$total.e$molar.x.age <- emtrends(models$suc$hedon$overall,
-                                                        ~ Age,
-                                                        var = "c.molarity")
-      # If we wanted these slopes in terms of the response variable AT THE GRAND
-      # MEAN we can add the `regrid = "response"` argument
-      # However, this is frequently NOT what you want when you graph the log 
-      # curve or talk about log change across a response variable
-      summary(compars$suc$hedon$total.e$molar.x.age)
-      
-      
-    #Make and save residual distribution plot
-      #make PNG file
-      png("ShedTot Residual Probability Density.png", width = 300, height = 300)
-      #plot residual density function
-      plot(density(residuals(models$suc$hedon$total.e)), 
+    # Make and save residual distribution plot
+      # make PNG file
+      png("HhedTot Residual Probability Density.png", width = 300, height = 300)
+      # plot residual density function
+      plot(density(residuals(models$h2o$hedon$total.e)), 
            main = "",
            xlab = "",
            frame = FALSE)
       #Add normal distribution to the residual plot for comparison to check assumption of normality
-      MEAN = mean(residuals(models$suc$hedon$total.e))
-      STDEV = sqrt(var(residuals(models$suc$hedon$total.e)))
+      MEAN = mean(residuals(models$h2o$hedon$total.e))
+      STDEV = sqrt(var(residuals(models$h2o$hedon$total.e)))
       curve(dnorm(x, mean = MEAN, sd = STDEV),
             col = "darkblue",
             lwd = 2,
@@ -170,3 +215,7 @@
       remove(MEAN, STDEV)
       #close the file
       dev.off()
+      
+      
+# Save the workspace
+save.image("ABHV_workspace.RData")
