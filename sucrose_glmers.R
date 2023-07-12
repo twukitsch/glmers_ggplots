@@ -170,3 +170,7 @@
       remove(MEAN, STDEV)
       #close the file
       dev.off()
+      
+
+# Save the workspace
+save.image("ABHV_workspace.RData")
