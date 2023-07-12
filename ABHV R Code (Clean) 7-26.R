@@ -1,7 +1,7 @@
 # Load Packages ####
 
 # See if rtools is installed. It has necessary C++ compiler for installs of some of the libraries that are required.
-if (Sys.which("make") = = "") { # Check to see if "make" command from rtools is found in system's PATH. If an empty string is retuned, rtools isn't installed.
+if (Sys.which("make") == "") { # Check to see if "make" command from rtools is found in system's PATH. If an empty string is retuned, rtools isn't installed.
  message("Rtools is not found. Please install Rtools from https://cran.r-project.org/bin/windows/Rtools/ and restart R.")
 } else { #rtools installed = = TRUE
  message("Rtools is installed.")
@@ -104,20 +104,20 @@ if (Sys.which("make") = = "") { # Check to see if "make" command from rtools is 
 } #end rtools installed = = TRUE
 
 
-#Read in data file with auto-headings and blanks/ N/As set to blank ("")
-data <- list()
+# Read in data file with auto-headings and blanks/ N/As set to blank ("")
+ data <- list()
 
-#Read in data file with auto-headings and blanks/ N/As set to blank ("")
-data$raw <- read.csv("C:/Users/Kieri/Documents/ABHV/ABHV2018.csv", na.strings = "\"\"", stringsAsFactors = TRUE)
-data$raw$RatID <- as.factor(data$raw$RatID) # Convert RatID to factor because it is not a numeric variable
-View(data$raw)
+# Read in data file with auto-headings and blanks/ N/As set to blank ("")
+  data$raw <- read.csv("C:/Users/Kieri/Documents/ABHV/ABHV2018.csv", na.strings = "\"\"", stringsAsFactors = TRUE)
+  data$raw$RatID <- as.factor(data$raw$RatID) # Convert RatID to factor because it is not a numeric variable
+  View(data$raw)
 
 
-# ETHANOL ##### (!)FIX FLAG
+# ETHANOL #### (!)FIX FLAG
 
-###Data Frame Preparation###
+### Data Frame Preparation###
 
-##Subset for Substance
+## Subset for Substance
  # With Controls
   data$eth$ctrl <- subset(data$raw, Substance = = "Ethanol")
  # Rescaling concentration to avoid issues with eigen values
@@ -315,7 +315,7 @@ View(data$raw)
       BIC(models$eth$avers$MR3, models$eth$avers$MR1, models$eth$avers$total.e)
   
     # Make and save residual distribution plot
-      #make PNG file
+      # make PNG file
       png("EaversMR3 Residual Probability Density.png", width = 300, height = 300)
       # Start by plotting a density function of model's residuals
       plot(density(residuals(models$eth$avers$MR3)), 
@@ -362,7 +362,7 @@ View(data$raw)
       # curve or talk about log change across a response variable
       summary(compars$eth$hedon$overall$conc.x.cond)
     
-    #Make and save residual distribution plot
+    # Make and save residual distribution plot
       #make PNG file
       png("Ehed Residual Probability Density.png", width = 300, height = 300)
       #plot residual density function
@@ -370,7 +370,7 @@ View(data$raw)
            main = "",
            xlab = "",
            frame = FALSE)
-      #Add normal distribution to the residual plot for comparison to check assumption of normality
+      # Add normal distribution to the residual plot for comparison to check assumption of normality
       MEAN = mean(residuals(models$eth$hedon$overall))
       STDEV = sqrt(var(residuals(models$eth$hedon$overall)))
       curve(dnorm(x, mean = MEAN, sd = STDEV),
@@ -379,7 +379,7 @@ View(data$raw)
             add = TRUE,
             yaxt = "n")
       remove(MEAN, STDEV)
-      #close the file
+      #c lose the file
       dev.off()
 
 
@@ -393,18 +393,18 @@ View(data$raw)
  
     # Post Hocs and Planned Contrasts
       compars$eth$hedon$total.e <- list() # Create new comparison list for overall model
-      compars$eth$hedons$total.e$age <- emmeans(models$eth$hedon$total.e, ~ Age) # Age post hoc comparison
+      compars$eth$hedon$total.e$age <- emmeans(models$eth$hedon$total.e, ~ Age) # Age post hoc comparison
       summary(compars$eth$hedon$total.e$age, type = "response")
       
-    #Make and save residual distribution plot
+    # Make and save residual distribution plot
       #make PNG file
       png("EhedTot Residual Probability Density.png", width = 300, height = 300)
-      #plot residual density function
+      # plot residual density function
       plot(density(residuals(models$eth$hedon$total.e)), 
            main = "",
            xlab = "",
            frame = FALSE)
-      #Add normal distribution to the residual plot for comparison to check assumption of normality
+      # Add normal distribution to the residual plot for comparison to check assumption of normality
       MEAN = mean(residuals(models$eth$hedon$total.e))
       STDEV = sqrt(var(residuals(models$eth$hedon$total.e)))
       curve(dnorm(x, mean = MEAN, sd = STDEV),
@@ -413,7 +413,7 @@ View(data$raw)
             add = TRUE,
             yaxt = "n")
       remove(MEAN, STDEV)
-      #close the file
+      # close the file
       dev.off()
  
   ### Ethanol Hedonics GLMER (EtOH Group Only: MAC & ROC) ######
@@ -437,15 +437,15 @@ View(data$raw)
       BIC(models$eth$hedon$MR1, models$eth$hedon$total.e)
    
   
-    #Make and save residual distribution plot
-      #make PNG file
+    # Make and save residual distribution plot
+      # make PNG file
       png("EhedMR Residual Probability Density.png", width = 300, height = 300)
-      #plot residual density function
+      # plot residual density function
       plot(density(residuals(models$eth$hedon$MR1)), 
            main = "",
            xlab = "",
            frame = FALSE)
-      #Add normal distribution to the residual plot for comparison to check assumption of normality
+      # Add normal distribution to the residual plot for comparison to check assumption of normality
       MEAN = mean(residuals(models$eth$hedon$MR1))
       STDEV = sqrt(var(residuals(models$eth$hedon$MR1)))
       curve(dnorm(x, mean = MEAN, sd = STDEV),
@@ -454,7 +454,7 @@ View(data$raw)
             add = TRUE,
             yaxt = "n")
       remove(MEAN, STDEV)
-      #close the file
+      # close the file
       dev.off()
  
  
@@ -507,10 +507,10 @@ View(data$raw)
 ###Data Frame Preparation###
 
 ##subset for Substance
-data$suc$ctrl <- subset(data@raw, Substance = = "Sucrose")
+data$suc$ctrl <- subset(data@raw, Substance == "Sucrose")
 View(data$suc$ctrl)
 ##Subset for Consumption Pattern Variables
-data$suc$no.ctrl <- subset(data$suc$ctrl, Condition ! = "CTRL")
+data$suc$no.ctrl <- subset(data$suc$ctrl, Condition != "CTRL")
 View(data$suc$no.ctrl)
 
 ##Rescaling
@@ -543,222 +543,13 @@ contrasts(data$suc$no.ctrl$Age)
 contrasts(data$suc$no.ctrl$Condition) = contr.sum(2)
 contrasts(data$suc$no.ctrl$Condition)
 
-## SUCROSE AVERSIVES #####
-
-### Sucrose Aversives GLMER (with EtOH vs CTRL)####
-Savers <-glmer(Total.Aversive ~ c.molarity*Age*Condition 
-        + (c.molarity|RatID), data = data$suc$ctrl, family = poisson)
-# Model did not converge, used code below to extend # of iterations and start from where the previous model left off.
-ss4 <- getME(Savers,c("theta","fixef"))
-Savers <- update(Savers,start = ss4,control = glmerControl(optCtrl = list(maxfun = 2e6)))
-summary(Savers)
-
-#Post Hocs & Planned Contrasts
-Savers.emm.a <- emmeans(Savers, ~ Age)
-summary(Savers.emm.a, type = "response")
-
-
-### Sucrose Aversives GLMER (EtOH Group Only: Total EtOH Consumed) ######
-
-SaversTot <-glmer(Total.Aversive ~ c.molarity*Age*c.totale 
-         + (c.molarity|RatID), data = data$suc$no.ctrl, family = poisson)
-
-# Model did not converge, used code below to extend # of iterations and start from where the previous model left off.
-ss5 <- getME(SaversTot,c("theta","fixef"))
-SaversTot <- update(SaversTot,start = ss5,control = glmerControl(optCtrl = list(maxfun = 2e6)))
-summary(SaversTot)
-
-##Post Hocs & Planned Contrasts
-
-#Age*Total Ethanol Manual Calculation
-#Adolescent
-Savers.Ado.b <- fixef(SaversTot)[4] + fixef(SaversTot)[7]
-Savers.Ado.b
-#Adult
-Savers.Adu.b <- fixef(SaversTot)[4] - fixef(SaversTot)[7]
-Savers.Adu.b
-
-## SUCROSE AVERSIVES ANALYSES####
-
-  ### Sucrose Aversives GLMER (with EtOH vs CTRL)####
-    models$suc$avers$overall <- glmer(Total.Aversive ~ c.molarity*Age*Condition 
-                                      + (c.molarity|RatID),
-                                      data = data$suc$ctrl,
-                                      family = poisson)
-    # Model did not converge, used code below to extend # of iterations and start from where the previous model left off.
-      ss <- getME(models$suc$avers$overall, c("theta", "fixef"))
-      models$suc$avers$overall <- update(models$suc$avers$overall,
-                                         start = ss,
-                                         control = glmerControl(optCtrl = list(maxfun = 2e6)))
-      remove(ss) # Clean workspace
-      
-    summary(models$suc$avers$overall)
-      
-    # Make and save residual distribution plot
-      # make PNG file
-      png("Savers Residual Probability Density.png", width = 300, height = 300)
-      # plot residual density function
-      plot(density(residuals(models$suc$avers$overall)), 
-           main = "",
-           xlab = "", 
-           frame = FALSE)
-      # Add normal distribution to the residual plot for comparison to check assumption of normality
-      MEAN = mean(residuals(models$suc$avers$overall))
-      STDEV = sqrt(var(residuals(models$suc$avers$overall)))
-      curve(dnorm(x, mean = MEAN, sd = STDEV),
-            col = "darkblue",
-            lwd = 2,
-            add = TRUE,
-            yaxt = "n")
-      remove(MEAN, STDEV) # Clean workspace
-      # close the file
-      dev.off()
-      
-      
-  ### Sucrose Aversives GLMER (EtOH Group Only: Total EtOH Consumed) ####
-    models$suc$avers$total.e <- glmer(Total.Aversive ~ c.molarity*Age*c.totale 
-                                      + (c.molarity|RatID),
-                                      data = data$suc$no.ctrl,
-                                      family = poisson)
- 
-    # Model did not converge, used code below to extend # of iterations and start from where the previous model left off.
-      ss <- getME(models$suc$avers$total.e, c("theta", "fixef"))
-      models$suc$avers$total.e <- update(models$suc$avers$total.e,
-                                         start = ss,
-                                         control = glmerControl(optCtrl = list(maxfun = 2e6)))
-        remove(ss) # Clean workspace
-   
-    summary(models$suc$avers$total.e)
- 
-    # Post Hocs & Planned Concrasts
-      compars$suc$avers$total.e <- list() # Create new comparison list for overall model
-      # Get the slopes (trends) for each level of age
-      compars$suc$avers$total.e$molar.x.age <- emtrends(models$suc$avers$total.e,
-                                                        ~ Age,
-                                                        var = "c.molarity")
-      
-      summary(compars$suc$avers$total.e$molar.x.age)
-      
-    # Make and save residual distribution plot
-      # make PNG file
-      png("SaversTot Residual Probability Density.png", width = 300, height = 300)
-      # plot residual density function
-      plot(density(residuals(models$suc$avers$total.e)), 
-           main = "",
-           xlab = "", 
-           frame = FALSE)
-      # Add normal distribution to the residual plot for comparison to check assumption of normality
-      MEAN = mean(residuals(models$suc$avers$total.e))
-      STDEV = sqrt(var(residuals(models$suc$avers$total.e)))
-      curve(dnorm(x, mean = MEAN, sd = STDEV),
-            col = "darkblue",
-            lwd = 2,
-            add = TRUE,
-            yaxt = "n")
-      remove(MEAN, STDEV) # Clean workspace
-      # close the file
-      dev.off()
-
-
-## SUCROSE HEDONIC ANALYSES ####
-
-  ### Sucrose Hedonics GLMER (with EtOH vs CTRL)####
-    models$suc$hedon$overall <- glmer(Total.Hedonic...MM. ~ c.molarity*Age*Condition
-                                      + (c.molarity|RatID),
-                                      data = data$suc$ctrl,
-                                      family = poisson)
-  
-    summary(models$suc$hedon$overall)
- 
-    # Post Hocs & Planned Contrasts
-      compars$suc$hedon$overall <- list() # Create new comparison list for overall model
-      # Use emmeans to get means for Age and summary to back-transform using 'type = "response"'
-      compars$suc$hedon$overall$age <- emmeans(models$suc$hedon$overall, ~ Age)
-      summary(compars$suc$hedon$overall$age, type = "response")
-      
-      # Getting b's for Age. Remember that c.molarity was rescaled so move the decimal to the left 2 times.
-      compars$suc$hedon$overall$molar.x.age <- emtrends(models$suc$hedon$overall,
-                                                        ~ Age,
-                                                        var = "c.molarity")
-      # If we wanted these slopes in terms of the response variable AT THE GRAND
-      # MEAN we can add the `regrid = "response"` argument
-      # However, this is frequently NOT what you want when you graph the log 
-      # curve or talk about log change across a response variable
-      summary(compars$suc$hedon$overall$molar.x.age)
-    
-    #Make and save residual distribution plot
-      #make PNG file
-      png("Shed Residual Probability Density.png", width = 300, height = 300)
-      #plot residual density function
-      plot(density(residuals(models$suc$hedon$overall)), 
-           main = "",
-           xlab = "",
-           frame = FALSE)
-      #Add normal distribution to the residual plot for comparison to check assumption of normality
-      MEAN = mean(residuals(models$suc$hedon$overall))
-      STDEV = sqrt(var(residuals(models$suc$hedon$overall)))
-      curve(dnorm(x, mean = MEAN, sd = STDEV),
-            col = "darkblue",
-            lwd = 2,
-            add = TRUE,
-            yaxt = "n")
-      remove(MEAN, STDEV)
-      #close the file
-      dev.off()
-
-
-  ### Sucrose Hedonics GLMER (EtOH Group Only: Total EtOH Consumed) ######
-    models$suc$hedon$total.e <- glmer(Total.Hedonic...MM. ~ c.molarity*Age*c.totale 
-                                      + (c.molarity|RatID),
-                                      data = data$suc$no.ctrl,
-                                      family = poisson)
-  
-    summary(models$suc$hedon$total.e)
- 
-    # Post Hocs and Planned Contrasts
-      compars$suc$hedon$total.e <- list() # Create new comparison list for overall model
-      compars$suc$hedon$total.e$age <- emmeans(models$suc$hedon$total.e, ~ Age) # Look at Age means
-      summary(compars$suc$hedon$total.e$age, type = "response") # Mean estimates at GRAND MEAN
-      
-      # Getting b's for Age. Remember that c.molarity was rescaled so move the decimal to the left 2 times.
-      compars$suc$hedon$total.e$molar.x.age <- emtrends(models$suc$hedon$overall,
-                                                        ~ Age,
-                                                        var = "c.molarity")
-      # If we wanted these slopes in terms of the response variable AT THE GRAND
-      # MEAN we can add the `regrid = "response"` argument
-      # However, this is frequently NOT what you want when you graph the log 
-      # curve or talk about log change across a response variable
-      summary(compars$suc$hedon$total.e$molar.x.age)
-      
-      
-    #Make and save residual distribution plot
-      #make PNG file
-      png("ShedTot Residual Probability Density.png", width = 300, height = 300)
-      #plot residual density function
-      plot(density(residuals(models$suc$hedon$total.e)), 
-           main = "",
-           xlab = "",
-           frame = FALSE)
-      #Add normal distribution to the residual plot for comparison to check assumption of normality
-      MEAN = mean(residuals(models$suc$hedon$total.e))
-      STDEV = sqrt(var(residuals(models$suc$hedon$total.e)))
-      curve(dnorm(x, mean = MEAN, sd = STDEV),
-            col = "darkblue",
-            lwd = 2,
-            add = TRUE,
-            yaxt = "n")
-      remove(MEAN, STDEV)
-      #close the file
-      dev.off()
-
-
 # WATER #####
 
 ###Data Frame Preparation###
 
 #Load new dataset made in excel to get rid of additional variables in Substance column. subset(), and select(filter(),cols) will not work for this.
 #Laptop
-data$h2o$ctrl <- subset(data$raw, Substance = = "Water1" | Substance = = "Water2")
+data$h2o$ctrl <- subset(data$raw, Substance == "Water1" | Substance == "Water2")
 View(data$h2o$ctrl)
 
 #Adjust contrasts to sum-to-zero
@@ -773,7 +564,7 @@ contrasts(data$h2o$ctrl$Condition)
 
 ##Filter for Consumption Pattern Variables
 library("dplyr", lib.loc = "~/R/win-library/3.6")
-data$h2o$no.ctrl <- filter(data$h2o$ctrl, Condition ! = "CTRL")
+data$h2o$no.ctrl <- filter(data$h2o$ctrl, Condition != "CTRL")
 View(data$h2o$no.ctrl)
 detach("package:dplyr", unload = TRUE)
 

@@ -1,20 +1,9 @@
----
-title: "Masters Example for Running GLMER and LMER Models with lme4"
-author: "TJ Wukitsch"
-date: "July 2023"
-output: github_document
----
+Masters Example for Running GLMER and LMER Models with lme4
+================
+TJ Wukitsch
+July 2023
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = T,
-                      results = "hide",
-                      error = F,
-                      warning = F,
-                      message = F,
-                      eval = F)
-```
-
-# DATA BACKGROUND AND STRUCTURE...
+# DATA BACKGROUND AND STRUCTURE…
 
 blah blah here
 
@@ -22,11 +11,19 @@ blah blah here
 
 ## Install and Load Required Packages
 
-If you haven't already downloaded and installed Rtools, please install [`Rtools`](https://cran.r-project.org/bin/windows/Rtools/) and restart R. The C++ compiler is required for some of the packages that you are about to install. 
+If you haven’t already downloaded and installed Rtools, please install
+[`Rtools`](https://cran.r-project.org/bin/windows/Rtools/) and restart
+R. The C++ compiler is required for some of the packages that you are
+about to install.
 
-The following code will check and remind you if you haven't yet installed Rtools. Then it will check to see if the package is already downloaded and installed. If so, it will simply load the package. If not, it will install the package from CRAN and then load the package once the installation is complete. You may be prompted to allow some of the downloads to take place so please remain at your device.
+The following code will check and remind you if you haven’t yet
+installed Rtools. Then it will check to see if the package is already
+downloaded and installed. If so, it will simply load the package. If
+not, it will install the package from CRAN and then load the package
+once the installation is complete. You may be prompted to allow some of
+the downloads to take place so please remain at your device.
 
-```{r load packages}
+``` r
 # Load Packages ####
 
 # See if rtools is installed. It has necessary C++ compiler for installs of some of the libraries that are required.
@@ -135,7 +132,7 @@ if (Sys.which("make") == "") {  # Check to see if "make" command from rtools is 
 
 ## Set your working directory
 
-```{r Working Directory}
+``` r
 # Set your working directory to your project folder and check that it is correct
 setwd("C:/Users/kieri/Documents/ABHV/")
 getwd()
@@ -143,34 +140,46 @@ getwd()
 
 # Workspace Overview
 
-To keep an organized and uncluttered workspace, I use a set of hierarchical lists to store related objects for project analyses.
-We have the following object categories with most analyses:
-* data
-* models
-* comparisons (abbv. "compars")
-* plots
+To keep an organized and uncluttered workspace, I use a set of
+hierarchical lists to store related objects for project analyses. We
+have the following object categories with most analyses: \* data \*
+models \* comparisons (abbv. “compars”) \* plots
 
-In this specific set of analyses we have a number of needs that determine the objects in each category.
+In this specific set of analyses we have a number of needs that
+determine the objects in each category.
 
 ## Data
 
-The full data requires various sub-setting to ensure the correct substances are being assessed independently and that controls that never received access to ethanol are not included when it would be inappropriate to do so. Thus, my data list object will look like this with abbreviated names for easier calling:
+The full data requires various sub-setting to ensure the correct
+substances are being assessed independently and that controls that never
+received access to ethanol are not included when it would be
+inappropriate to do so. Thus, my data list object will look like this
+with abbreviated names for easier calling:
 
-* data
-  * raw
-  * ethanol
-    * with controls
-    * no controls
-  * sucrose
-    * with controls
-    * no controls
-  * water
-    * with controls
-    * no controls
+- data
+  - raw
+  - ethanol
+    - with controls
+    - no controls
+  - sucrose
+    - with controls
+    - no controls
+  - water
+    - with controls
+    - no controls
 
-To do this we generate a list called `data` and begin populating it with subsets of the original data. In addition we adjust the contrast coding and scale of some of our variables to help us avoid problems later. I adjust my categorical (factor) variables' contrast coding attributes because I want my GLMER models' categorical variables to be coded like an ANOVA to ease interpretation of the effects. In other words, I want my model's intercept to be at the Grand Mean. Thus, I must recode my categorical variables using sum-to-zero aka contrast coding instead of dummy coding or other types. One group is assigned +1 and the other is assigned -1 and they sum to zero.
+To do this we generate a list called `data` and begin populating it with
+subsets of the original data. In addition we adjust the contrast coding
+and scale of some of our variables to help us avoid problems later. I
+adjust my categorical (factor) variables’ contrast coding attributes
+because I want my GLMER models’ categorical variables to be coded like
+an ANOVA to ease interpretation of the effects. In other words, I want
+my model’s intercept to be at the Grand Mean. Thus, I must recode my
+categorical variables using sum-to-zero aka contrast coding instead of
+dummy coding or other types. One group is assigned +1 and the other is
+assigned -1 and they sum to zero.
 
-```{r Data Subsetting}
+``` r
 data <- list()
 
 # Read in data file with auto-headings and blanks/ N/As set to blank ("") and my categorical or character data read in as the data type "factor"
@@ -236,95 +245,125 @@ View(data$raw)
     View(data$h2o$no.ctrl)
 ```
 
-Now we have our data list object with the following hierarchical structure:
+Now we have our data list object with the following hierarchical
+structure:
 
-* `data`
-  * `data$raw`
-  * `data$eth`
-    * `data$eth$ctrl`
-    * `data$eth$no.ctrl`
-  * `data$suc`
-    * `data$suc$ctrl`
-    * `data$suc$no.ctrl`
-  * `data$h2o`
-    * `data$h2o$ctrl`
-    * `data$h2o$no.ctrl`
+- `data`
+  - `$raw`
+  - `$eth`
+    - `$ctrl`
+    - `$no.ctrl`
+  - `$suc`
+    - `$ctrl`
+    - `$no.ctrl`
+  - `$h2o`
+    - `$ctrl`
+    - `$no.ctrl`
 
-And I have performed my coding adjustments. However, I still need to further prepare our data to avoid issues during analysis such as problems with variance inflation. If I mean-center the continuous variables that will be predictors in an LMER or GLMER model, the variance inflation factor tends to remain within a tolerable range and doesn't affect results. Thus I mean-center the variables I need to below and save my workspace.
+And I have performed my coding adjustments. However, I still need to
+further prepare our data to avoid issues during analysis such as
+problems with variance inflation. If I mean-center the continuous
+variables that will be predictors in an LMER or GLMER model, the
+variance inflation factor tends to remain within a tolerable range and
+doesn’t affect results. Thus I mean-center the variables I need to below
+and save my workspace.
 
-```{r Centering Variables}
+``` r
 # Centering Variables
 
   # Ethanol
     # center concentration to avoid issues with variance inflation factor (VIF) tolerances
-    data$eth$ctrl$c.conc <- data$eth$ctrl$recoded.conc - mean(data$eth$ctrl$recoded.conc)
+    data$eth$ctrl$c.conc <- data$eth$ctrl$recoded.conc-mean(data$eth$ctrl$recoded.conc)
     # center TOTAL.ETOH.Swap.Consumed..g.kg. to avoid issues with variance inflation factor (VIF) tolerances
-    data$eth$no.ctrl$c.totale <- data$eth$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg. - mean(data$eth$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg.)
+    data$eth$no.ctrl$c.totale <- data$eth$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg.-mean(data$eth$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg.)
     # center concentration fto avoid issues with variance inflation factor (VIF) tolerances
-    data$eth$no.ctrl$c.conc <- data$eth$no.ctrl$recoded.conc - mean(data$eth$no.ctrl$recoded.conc)
+    data$eth$no.ctrl$c.conc <- data$eth$no.ctrl$recoded.conc-mean(data$eth$no.ctrl$recoded.conc)
     
     # center MAC and ROC to avoid issues with variance inflation factor (VIF) tolerances
-    data$eth$no.ctrl$c.MAC <- data$eth$no.ctrl$MAC - mean(data$eth$no.ctrl$MAC)
-    data$eth$no.ctrl$c.ROC <- data$eth$no.ctrl$ROC - mean(data$eth$no.ctrl$ROC)
-    data$eth$no.ctrl$c.MAC3 <- data$eth$no.ctrl$MAC3 - mean(data$eth$no.ctrl$MAC3)
-    data$eth$no.ctrl$c.ROC3 <- data$eth$no.ctrl$ROC3 - mean(data$eth$no.ctrl$ROC3)
+    data$eth$no.ctrl$c.MAC <- data$eth$no.ctrl$MAC-mean(data$eth$no.ctrl$MAC)
+    data$eth$no.ctrl$c.ROC <- data$eth$no.ctrl$ROC-mean(data$eth$no.ctrl$ROC)
+    data$eth$no.ctrl$c.MAC3 <- data$eth$no.ctrl$MAC3-mean(data$eth$no.ctrl$MAC3)
+    data$eth$no.ctrl$c.ROC3 <- data$eth$no.ctrl$ROC3-mean(data$eth$no.ctrl$ROC3)
   
     
   # Sucrose
     # Center molarity to avoid issues with variance inflation factor (VIF) tolerances
-    data$suc$ctrl$c.molarity <- data$suc$ctrl$molarity - mean(data$suc$ctrl$molarity)
-    data$suc$no.ctrl$c.molarity <- data$suc$no.ctrl$molarity - mean(data$suc$no.ctrl$molarity)
+    data$suc$ctrl$c.molarity <- data$suc$ctrl$molarity-mean(data$suc$ctrl$molarity)
+    data$suc$no.ctrl$c.molarity <- data$suc$no.ctrl$molarity-mean(data$suc$no.ctrl$molarity)
     #center TOTAL.ETOH.Swap.Consumed..g.kg. to avoid issues with variance inflation factor (VIF) tolerances
-    data$suc$no.ctrl$c.totale <- data$suc$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg. - mean(data$suc$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg.)
-
+    data$suc$no.ctrl$c.totale <- data$suc$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg.-mean(data$suc$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg.)
+    #center MAC and ROC for noCTRL subset to avoid issues with variance inflation factor (VIF) tolerances
+    data$suc$no.ctrl$c.MAC <- data$suc$no.ctrl$MAC-mean(data$suc$no.ctrl$MAC)
+    data$suc$no.ctrl$c.ROC <- data$suc$no.ctrl$ROC-mean(data$suc$no.ctrl$ROC)
+    
 
   # Water
     #center TOTAL.ETOH.Swap.Consumed..g.kg. to avoid issues with variance inflation factor (VIF) tolerances
     data$h2o$no.ctrl$c.totale <- data$h2o$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg.-mean(data$h2o$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg.)
     
+    #center MAC and ROC for noCTRL subset to avoid issues with variance inflation factor (VIF) tolerances
+    data$h2o$no.ctrl$c.MAC <- data$h2o$no.ctrl$MAC-mean(data$h2o$no.ctrl$MAC)
+    data$h2o$no.ctrl$c.ROC <- data$h2o$no.ctrl$ROC-mean(data$h2o$no.ctrl$ROC)
+
 # Save the workspace
 save.image("ABHV_workspace.RData")
-
 ```
 
-## Models (Analyses) & 
+## Models (Analyses) &
 
-To accommodate and store each list object returned by our models I need another hierarchical list object with a similar structure to the data above. However, there is more nuance because I am performing analyses for hedonic and aversive responses and, for each of those, I have analyses that involve different variables that were calculated from modeling other related data (total ethanol, MR, and MR3). So I will need a different list structure, and I may want to generate the list structure in advance so I can populate it with a list. It should look something like this:
+To accommodate and store each list object returned by our models I need
+another hierarchical list object with a similar structure to the data
+above. However, there is more nuance because I am performing analyses
+for hedonic and aversive responses and, for each of those, I have
+analyses that involve different variables that were calculated from
+modeling other related data (total ethanol, MR, and MR3). So I will need
+a different list structure, and I may want to generate the list
+structure in advance so I can populate it with a list. It should look
+something like this:
 
-* models
-  * ethanol
-    * aversive
-      * overall
-      * total ethanol
-      * Mean Alcohol Consumed & Rate of Change
-      * Mean Alcohol Consumed & Rate of Change excluding day 3
-    * hedonic
-      * overall
-      * total ethanol
-      * Mean Alcohol Consumed & Rate of Change
-      * Mean Alcohol Consumed & Rate of Change excluding day 3
-  * sucrose
-    * aversive
-      * overall
-      * total ethanol
-      * Mean Alcohol Consumed & Rate of Change
-    * hedonic
-      * overall
-      * total ethanol
-      * Mean Alcohol Consumed & Rate of Change
-  * water
-    * aversive
-      * overall
-      * total ethanol
-      * Mean Alcohol Consumed & Rate of Change
-    * hedonic
-      * overall
-      * total ethanol
-      * Mean Alcohol Consumed & Rate of Change
-      
-This is count data and has some missing data due to participant attrition and has a continuous predictor variable that represents my repeated measure (Concentration) since each animal reacted to each concentration of each substance. Therefore a poisson Generalized Linear Mixed Effects Regression (GLMER) is appropriate for analysis. There is some nesting in the structure of the data and for reasons related to understanding for the audience the publication was for I opted to do two separate analyses on this data set instead of properly nesting it. We will use ethanol as an illustrative example because it also has two models that I wanted to compare.
+- models
+  - ethanol
+    - aversive
+      - overall
+      - total ethanol
+      - Mean Alcohol Consumed & Rate of Change
+      - Mean Alcohol Consumed & Rate of Change excluding day 3
+    - hedonic
+      - overall
+      - total ethanol
+      - Mean Alcohol Consumed & Rate of Change
+      - Mean Alcohol Consumed & Rate of Change excluding day 3
+  - sucrose
+    - aversive
+      - overall
+      - total ethanol
+      - Mean Alcohol Consumed & Rate of Change
+    - hedonic
+      - overall
+      - total ethanol
+      - Mean Alcohol Consumed & Rate of Change
+  - water
+    - aversive
+      - overall
+      - total ethanol
+      - Mean Alcohol Consumed & Rate of Change
+    - hedonic
+      - overall
+      - total ethanol
+      - Mean Alcohol Consumed & Rate of Change
 
-```{r Model and Planned Comparison Lists}
+This is count data and has some missing data due to participant
+attrition and has a continuous predictor variable that represents my
+repeated measure (Concentration) since each animal reacted to each
+concentration of each substance. Therefore a poisson Generalized Linear
+Mixed Effects Regression (GLMER) is appropriate for analysis. There is
+some nesting in the structure of the data and for reasons related to
+understanding for the audience the publication was for I opted to do two
+separate analyses on this data set instead of properly nesting it. We
+will use ethanol as an illustrative example because it also has two
+models that I wanted to compare.
+
+``` r
 # List setup ####
 
 ## Models ####
@@ -360,12 +399,12 @@ compars <- list()
     compars$h2o$hedon  <- list()
 ```
 
-
-Now that we have our lists we can start running our models and comparisons and storing them as needed.
+Now that we have our lists we can start running our models and
+comparisons and storing them as needed.
 
 ### Ethanol
 
-```{r Aversive Responses: Overall Model}
+``` r
 # Ethanol vs Control (Overall)
 
   # predictors: full factorial fixed effects of centered concentration, age, and condition
@@ -378,22 +417,20 @@ Now that we have our lists we can start running our models and comparisons and s
   summary(models$eth$avers$overall)
 ```
 
-Now we need to check to see if our assumption of normally distributed residuals is correct using a simple plot.
+Now we need to check to see if our assumption of normally distributed
+residuals is correct using a simple plot.
 
-```{r Aversive Responses: Overall Model Residual Normality Check, echo = FALSE}
-# Start by plotting a density function of our model's residuals
-plot(density(residuals(models$eth$avers$overall)), 
-     main="", xlab="", frame= FALSE)
-# Add normal distribution to the residual plot for comparison to check assumption of normality
-MEAN = mean(residuals(models$eth$avers$overall)) # get the residual mean
-STDEV = sqrt(var(residuals(models$eth$avers$overall))) # get the st dev
-curve(dnorm(x, mean=MEAN, sd=STDEV), col="darkblue", lwd=2, add=TRUE, yaxt="n") # Generate normal curve
-remove(MEAN,STDEV) # Declutter workspace
-```
+The blue line is a normal distribution. The black line is our residual
+distribution. From the graph we can see the residuals are slighly
+kurtotic (pointier and a bit thinner than a normal curve) but mostly
+normal. I would say that the assumption of normality has been met. Now,
+on to interpretation. I have my summary from before, but I need to
+compare my significant variables. `emmeans` is a convenient package for
+this. I can look at the means from the model and compare my two levels
+of my Condition variable to see which direction the difference is in and
+how large the difference between means is.
 
-The blue line is a normal distribution. The black line is our residual distribution. From the graph we can see the residuals are slighly kurtotic (pointier and a bit thinner than a normal curve) but mostly normal. I would say that the assumption of normality has been met. Now, on to interpretation. I have my summary from before, but I need to compare my significant variables. `emmeans` is a convenient package for this. I can look at the means from the model and compare my two levels of my Condition variable to see which direction the difference is in and how large the difference between means is. 
-
-```{r Aversive Responses: Overall Model Planned Comparisons}
+``` r
   # Compare significant variables
   compars$eth$avers$overall <- list() # Create new comparison list for overall model
   compars$eth$avers$overall$condition <- emmeans(models$eth$avers$overall, ~ Condition) # Perform comparison of Condition with emmeans
@@ -404,13 +441,12 @@ The blue line is a normal distribution. The black line is our residual distribut
   
   #Save Workspace
   save.image("ABHV_workspace.RData")
-
 ```
 
-I document these numbers, save my workspace and then move on to the next model.
+I document these numbers, save my workspace and then move on to the next
+model.
 
-```{r Aversive Responses: Total Ethanol}
-
+``` r
 # Ethanol Group Only: Total Ethanol Consumed (total.e)
   
   # predictors: full factorial fixed effects of centered concentration, age, and total ethanol consumed during drinking phase of study
@@ -430,22 +466,19 @@ I document these numbers, save my workspace and then move on to the next model.
   remove(ss)
 ```
 
-Again, before I begin interpreting, I need to check to see if our assumption of normally distributed residuals is correct using a plot of probability density.
+Again, before I begin interpreting, I need to check to see if our
+assumption of normally distributed residuals is correct using a plot of
+probability density.
 
-```{r Aversive Responses: Total Ethanol Residual Normality Check, echo = FALSE}
-# Start by plotting a density function of our model's residuals
-plot(density(residuals(models$eth$avers$total.e)), 
-     main="", xlab="", frame= FALSE)
-# Add normal distribution to the residual plot for comparison to check assumption of normality
-MEAN = mean(residuals(models$eth$avers$total.e)) # get the residual mean
-STDEV = sqrt(var(residuals(models$eth$avers$total.e))) # get the st dev
-curve(dnorm(x, mean=MEAN, sd=STDEV), col="darkblue", lwd=2, add=TRUE, yaxt="n") # Generate normal curve
-remove(MEAN,STDEV)
-```
+Again, the blue line is a normal distribution. The black line is our
+residual distribution. From the graph we can see the residuals are,
+again, slightly kurtotic but mostly normal. I would say that the
+assumption of normality has been met her as well. Now, on to
+interpretation. I need to look at the means from the model and compare
+my two levels of my Condition variable to see which direction and how
+large the difference is.
 
-Again, the blue line is a normal distribution. The black line is our residual distribution. From the graph we can see the residuals are, again, slightly kurtotic but mostly normal. I would say that the assumption of normality has been met her as well. Now, on to interpretation. I need to look at the means from the model and compare my two levels of my Condition variable to see which direction and how large the difference is.
-
-```{r Aversive Responses: Total Ethanol Planned Comparisons}
+``` r
     # Compare significant variables
     compars$eth$avers$total.e <- list() # Create new comparison list for total.e model
     compars$eth$avers$total.e$age<- emmeans(models$eth$avers$total.e, ~ Age) # Perform comparison of Condition with emmeans
@@ -455,9 +488,9 @@ Again, the blue line is a normal distribution. The black line is our residual di
   save.image("ABHV_workspace.RData")
 ```
 
-Copy down the data you need, save, rinse, and repeat...
-    
-```{r Aversive Responses: MAC and RoC (MR1)}
+Copy down the data you need, save, rinse, and repeat…
+
+``` r
   # predictors: note that these are not the full factorial fixed effects. I'm not interested in the higher level interactions here.
 models$eth$avers$MR1 <-glmer(Total.Aversive ~ c.conc+Age+c.MAC+c.ROC
                  + c.conc:Age
@@ -481,26 +514,16 @@ vif(models$eth$avers$MR1)
 # Compare with the previous model
 AIC(models$eth$avers$MR1, models$eth$avers$total.e)
 BIC(models$eth$avers$MR1, models$eth$avers$total.e)
-
 ```
+
 Again, check normality of residuals
-```{r Aversive Responses: MAC and RoC (MR1) Residual Normality Check, echo = FALSE}
-# Start by plotting a density function of model's residuals
-plot(density(residuals(models$eth$avers$MR1)), 
-     main="", xlab="", frame= FALSE)
-# Add normal distribution to the residual plot for comparison to check assumption of normality
-MEAN = mean(residuals(models$eth$avers$MR1)) # get the residual mean
-STDEV = sqrt(var(residuals(models$eth$avers$MR1))) # get the st dev
-curve(dnorm(x, mean=MEAN, sd=STDEV), col="darkblue", lwd=2, add=TRUE, yaxt="n") # Generate normal curve
-remove(MEAN,STDEV)
 
-#Save Workspace
-save.image("ABHV_workspace.RData")
-```
+Similar to previous residuals. No planned comparisons here. This model
+was not selected for interpretation (considerably higher BIC), so I
+didn’t perform any. Then we repeat for the 4th model which excludes the
+first day of drinking from calculations of MAC and RoC.
 
-Similar to previous residuals. No planned comparisons here. This model was not selected for interpretation (considerably higher BIC), so I didn't perform any. Then we repeat for the 4th model which excludes the first day of drinking from calculations of MAC and RoC.
-
-```{r Aversive Responses: MAC and RoC (MR3)}
+``` r
   # predictors: note that these are not the full factorial fixed effects. I'm not interested in the higher level interactions here.
 models$eth$avers$MR3 <-glmer(Total.Aversive ~ c.conc+Age+c.MAC3+c.ROC3
                  + c.conc:Age
@@ -525,81 +548,62 @@ BIC(models$eth$avers$MR3, models$eth$avers$MR1, models$eth$avers$total.e)
 
 Again, check normality of residuals
 
-```{r Aversive Responses: MAC and RoC (MR3) Residual Normality Check, echo = FALSE}
-# Start by plotting a density function of model's residuals
-plot(density(residuals(models$eth$avers$MR3)), 
-     main="", xlab="", frame= FALSE)
-# Add normal distribution to the residual plot for comparison to check assumption of normality
-MEAN = mean(residuals(models$eth$avers$MR3)) # get the residual mean
-STDEV = sqrt(var(residuals(models$eth$avers$MR3))) # get the st dev
-curve(dnorm(x, mean=MEAN, sd=STDEV), col="darkblue", lwd=2, add=TRUE, yaxt="n") # Generate normal curve
-remove(MEAN,STDEV)
-
-#Save Workspace
-save.image("ABHV_workspace.RData")
-```
-
-And again, things look pretty normal. This one also has no planned comparisons and was not selected for the same reason as the previous. The remaining model runs are not shown here for brevity.
+And again, things look pretty normal. This one also has no planned
+comparisons and was not selected for the same reason as the previous.
+The remaining model runs are not shown here for brevity.
 
 # Plotting/Graphing GLMERs with ggplot2
 
-```{r }
+In the end, our specific lists of objects with abbreviations looks like
+this:
 
-```
-
-
-In the end, our specific lists of objects with abbreviations looks like this:
-
-* data
-  * raw
-  * ethanol
-    * with controls
-    * no controls
-  * sucrose
-    * with controls
-    * no controls
-  * water
-    * with controls
-    * no controls
-* models
-  * ethanol
-    * aversive
-      * overall
-      * total ethanol
-      * MR (Mean Alcohol Consumed & Rate of Change)
-      * MR3 (Mean Alcohol Consumed & Rate of Change excluding day 3)
-    * hedonic
-      * overall
-      * total ethanol
-      * MR (Mean Alcohol Consumed & Rate of Change)
-      * MR3 (Mean Alcohol Consumed & Rate of Change excluding day 3)
-  * sucrose
-    * aversive
-      * overall
-      * total ethanol
-      * MR (Mean Alcohol Consumed & Rate of Change)
-    * hedonic
-      * overall
-      * total ethanol
-      * MR (Mean Alcohol Consumed & Rate of Change)
-  * water
-    * aversive
-      * overall
-      * total ethanol
-      * MR (Mean Alcohol Consumed & Rate of Change)
-    * hedonic
-      * overall
-      * total ethanol
-      * MR (Mean Alcohol Consumed & Rate of Change)
-* comparisons
-* plots
+- data
+  - raw
+  - ethanol
+    - with controls
+    - no controls
+  - sucrose
+    - with controls
+    - no controls
+  - water
+    - with controls
+    - no controls
+- models
+  - ethanol
+    - aversive
+      - overall
+      - total ethanol
+      - MR (Mean Alcohol Consumed & Rate of Change)
+      - MR3 (Mean Alcohol Consumed & Rate of Change excluding day 3)
+    - hedonic
+      - overall
+      - total ethanol
+      - MR (Mean Alcohol Consumed & Rate of Change)
+      - MR3 (Mean Alcohol Consumed & Rate of Change excluding day 3)
+  - sucrose
+    - aversive
+      - overall
+      - total ethanol
+      - MR (Mean Alcohol Consumed & Rate of Change)
+    - hedonic
+      - overall
+      - total ethanol
+      - MR (Mean Alcohol Consumed & Rate of Change)
+  - water
+    - aversive
+      - overall
+      - total ethanol
+      - MR (Mean Alcohol Consumed & Rate of Change)
+    - hedonic
+      - overall
+      - total ethanol
+      - MR (Mean Alcohol Consumed & Rate of Change)
+- comparisons
+- plots
 
 ## Including Plots
 
 You can also embed plots, for example:
 
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+Note that the `echo = FALSE` parameter was added to the code chunk to
+prevent printing of the R code that generated the plot.
