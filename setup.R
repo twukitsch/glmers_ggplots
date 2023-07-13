@@ -4,7 +4,7 @@
 
   # Add Divider
     cat("################################################################################\n
-############################### SETUP  START ###################################\n
+################################# SETUP  START #################################\n
 ################################################################################\n")
   
   # See if rtools is installed. It has necessary C++ compiler for installs of some of the libraries that are required.
@@ -108,7 +108,7 @@
     
       # Add Divider
       cat("################################################################################\n
-########## PACKAGES DOWNLOADED & LOADED - CHECK OUTPUT FOR ERRORS ##############\n
+############ PACKAGES DOWNLOADED & LOADED - CHECK OUTPUT FOR ERRORS ############\n
 ################################################################################\n")
   } # end rtools installed == TRUE
 
@@ -120,6 +120,11 @@ getwd()
 
 # DATA LOADING AND SETUP ####
   
+# Add Divider
+cat("################################################################################\n
+########################## DATA LOADING & SETUP START ##########################\n
+################################################################################\n")
+
   ## Data Object & Inherited Attributes ####
   data <- list() # create list object to store data
   
@@ -139,6 +144,7 @@ getwd()
       # adjust Condition to contrast coding
       contrasts(data$raw$Condition)=contr.sum(2)
       contrasts(data$raw$Condition)
+      
         
   ## Subset Ethanol Data ####
       
@@ -156,3 +162,76 @@ getwd()
     View(data$eth$no.ctrl)
     
   ## Subset Sucrose Data ####
+    # With Controls
+    data$suc$ctrl <- subset(data$raw, Substance == "Sucrose")
+      # Rescale -- to avoid issues with eigen values later
+      data$suc$ctrl$molarity <- car::recode(data$suc$ctrl$Concentration, ".34=.01; 3.4=.1; 34=1")
+    
+    # No Controls
+      # Subset rats that could drink ethanol from rats that never had the opportunity
+    data$suc$no.ctrl <- subset(data$suc$ctrl, Condition != "CTRL")
+    
+    # View your data frames in RStudio
+    View(data$suc$ctrl)
+    View(data$suc$no.ctrl)
+  
+  ## Subset Water Data ####
+    # With Controls
+    data$h2o$ctrl <- subset(data$raw, Substance == "Water1" | Substance == "Water2")
+      # Get rid of the 4 levels of Substance inherited from the original dataset
+      data$h2o$ctrl$Substance <- factor(data$h2o$ctrl$Substance)
+      # Adjust contrasts to sum-to-zero now that there are 2 factors
+      contrasts(data$h2o$ctrl$Substance)=contr.sum(2)
+      contrasts(data$h2o$ctrl$Substance)
+    
+    # No Controls
+      # Subset rats that could drink ethanol from rats that never had the opportunity
+    data$h2o$no.ctrl <- subset(data$h2o$ctrl, Condition != "CTRL")      
+    
+    # View your data frames in RStudio
+    View(data$h2o$ctrl)
+    View(data$h2o$no.ctrl)
+
+    
+  ## Mean Centering Variables ####
+    
+    # Ethanol
+      # center Concentration to avoid issues with variance inflation factor (VIF) tolerances
+      data$eth$ctrl$c.conc <- data$eth$ctrl$recoded.conc - mean(data$eth$ctrl$recoded.conc)
+      # center TOTAL.ETOH.Swap.Consumed..g.kg.
+      data$eth$no.ctrl$c.totale <- data$eth$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg. - mean(data$eth$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg.)
+      # center Concentration 
+      data$eth$no.ctrl$c.conc <- data$eth$no.ctrl$recoded.conc - mean(data$eth$no.ctrl$recoded.conc)
+      
+      # center MAC and ROC
+      data$eth$no.ctrl$c.MAC <- data$eth$no.ctrl$MAC - mean(data$eth$no.ctrl$MAC)
+      data$eth$no.ctrl$c.ROC <- data$eth$no.ctrl$ROC - mean(data$eth$no.ctrl$ROC)
+      data$eth$no.ctrl$c.MAC3 <- data$eth$no.ctrl$MAC3 - mean(data$eth$no.ctrl$MAC3)
+      data$eth$no.ctrl$c.ROC3 <- data$eth$no.ctrl$ROC3 - mean(data$eth$no.ctrl$ROC3)
+    
+    
+    # Sucrose
+      # Center molarity
+      data$suc$ctrl$c.molarity <- data$suc$ctrl$molarity - mean(data$suc$ctrl$molarity)
+      data$suc$no.ctrl$c.molarity <- data$suc$no.ctrl$molarity - mean(data$suc$no.ctrl$molarity)
+      #center TOTAL.ETOH.Swap.Consumed..g.kg.
+      data$suc$no.ctrl$c.totale <- data$suc$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg. - mean(data$suc$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg.)
+    
+    
+    # Water
+    #center TOTAL.ETOH.Swap.Consumed..g.kg.
+    data$h2o$no.ctrl$c.totale <- data$h2o$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg.-mean(data$h2o$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg.)
+    
+    # Save the workspace
+    save.image("ABHV_workspace.RData")
+    
+# Add lists for storage
+    models <- list()
+    compars <- list()
+    
+    # Add Divider
+    cat("################################################################################\n
+######################### DATA LOADING & SETUP  COMPLETE #########################\n
+################################################################################\n")
+    
+    
