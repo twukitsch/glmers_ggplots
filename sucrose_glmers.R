@@ -1,6 +1,11 @@
-## SUCROSE AVERSIVES ANALYSES####
+# SUCROSE AVERSIVES ANALYSES####
 
-  ### Sucrose Aversives GLMER (with EtOH vs CTRL)####
+# Add Divider
+cat("################################################################################\n
+########################## SUCROSE ANALYSES START ##############################\n
+################################################################################\n")
+
+  ## Sucrose Aversives GLMER (with EtOH vs CTRL)####
     models$suc$avers$overall <- glmer(Total.Aversive ~ c.molarity*Age*Condition 
                                       + (c.molarity|RatID),
                                       data = data$suc$ctrl,
@@ -35,7 +40,7 @@
       dev.off()
       
       
-  ### Sucrose Aversives GLMER (EtOH Group Only: Total EtOH Consumed) ####
+  ## Sucrose Aversives GLMER (EtOH Group Only: Total EtOH Consumed) ####
     models$suc$avers$total.e <- glmer(Total.Aversive ~ c.molarity*Age*c.totale 
                                       + (c.molarity|RatID),
                                       data = data$suc$no.ctrl,
@@ -80,9 +85,9 @@
       dev.off()
 
 
-## SUCROSE HEDONIC ANALYSES ####
+# SUCROSE HEDONIC ANALYSES ####
 
-  ### Sucrose Hedonics GLMER (with EtOH vs CTRL)####
+  ## Sucrose Hedonics GLMER (with EtOH vs CTRL)####
     models$suc$hedon$overall <- glmer(Total.Hedonic...MM. ~ c.molarity*Age*Condition
                                       + (c.molarity|RatID),
                                       data = data$suc$ctrl,
@@ -101,7 +106,7 @@
                                                         ~ Age,
                                                         var = "c.molarity")
       # If we wanted these slopes in terms of the response variable AT THE GRAND
-      # MEAN we can add the `regrid = "response"` argument
+      # MEAN we can add the `regrid = "response"` argument similar to 'type' in emmeans
       # However, this is frequently NOT what you want when you graph the log 
       # curve or talk about log change across a response variable
       summary(compars$suc$hedon$overall$molar.x.age)
@@ -127,7 +132,7 @@
       dev.off()
 
 
-  ### Sucrose Hedonics GLMER (EtOH Group Only: Total EtOH Consumed) ######
+  ## Sucrose Hedonics GLMER (EtOH Group Only: Total EtOH Consumed) ######
     models$suc$hedon$total.e <- glmer(Total.Hedonic...MM. ~ c.molarity*Age*c.totale 
                                       + (c.molarity|RatID),
                                       data = data$suc$no.ctrl,
@@ -173,4 +178,10 @@
       
 
 # Save the workspace
-save.image("ABHV_workspace.RData")
+  save.image("ABHV_workspace.RData")
+  
+# Add Divider
+  cat("################################################################################\n
+########################### SUCROSE ANALYSES END ###############################\n
+################################################################################\n")
+  

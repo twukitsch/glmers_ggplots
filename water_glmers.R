@@ -1,6 +1,11 @@
-## WATER AVERSIVES ANALYSES####
+# WATER AVERSIVES ANALYSES####
 
-  ### Water Aversives GLMER (with EtOH vs CTRL)####
+# Add Divider
+cat("################################################################################\n
+########################### WATER ANALYSES START ###############################\n
+################################################################################\n")
+
+  ## Water Aversives GLMER (with EtOH vs CTRL)####
     models$h2o$avers$overall <- glmer(Total.Aversive ~ Substance*Age*Condition 
                                       + (1|RatID), # Intercept Only
                                       data = data$h2o$ctrl,
@@ -61,7 +66,7 @@
       dev.off()
       
       
-  ### Water Aversives GLMER (EtOH Group Only: Total EtOH Consumed) ####
+  ## Water Aversives GLMER (EtOH Group Only: Total EtOH Consumed) ####
     models$h2o$avers$total.e <- glmer(Total.Aversive ~ Substance*Age*c.totale 
                                       + (1|RatID), # Intercept Only
                                       data = data$h2o$no.ctrl,
@@ -120,9 +125,9 @@
       dev.off()
 
 
-## WATER HEDONIC ANALYSES ####
+# WATER HEDONIC ANALYSES ####
 
-  ### Water Hedonics GLMER (with EtOH vs CTRL)####
+  ## Water Hedonics GLMER (with EtOH vs CTRL)####
     models$h2o$hedon$overall <- glmer(Total.Hedonic...MM. ~ Substance*Age*Condition
                                       + (1|RatID),
                                       data = data$h2o$ctrl,
@@ -166,7 +171,7 @@
       dev.off()
 
 
-  ### Water Hedonics GLMER (EtOH Group Only: Total EtOH Consumed) ######
+  ## Water Hedonics GLMER (EtOH Group Only: Total EtOH Consumed) ######
     models$h2o$hedon$total.e <- glmer(Total.Hedonic...MM. ~ Substance*Age*c.totale 
                                       + (1|RatID),
                                       data = data$h2o$no.ctrl,
@@ -219,3 +224,8 @@
       
 # Save the workspace
 save.image("ABHV_workspace.RData")
+
+# Add Divider
+  cat("################################################################################\n
+############################ WATER ANALYSES END ################################\n
+################################################################################\n")
