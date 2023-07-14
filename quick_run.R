@@ -9,3 +9,10 @@ source("sucrose_glmers.R")
 
 # RUN WATER glmers
 source("water_glmers.R")
+
+# SAVE WORKSPACE
+save.image("ABHV_workspace.RData")
+
+# RUN GRAPH SETUP
+source("graph_setup.R")
+

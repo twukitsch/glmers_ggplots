@@ -3,36 +3,116 @@
   # Create list for storage
   plots <- list()
 
+
+# GLOBAL ATTRIBUTES ####
   
-# Y AXIS BREAKS & LABELS ####
+  ## Text #### (!) Figure out what each of these do!!!!!
+  plots$global$strip.text.x <- element_text(size = 18, face = "bold")
+  plots$global$axis.title <- element_text(size = 22)
+  plots$global$axis.text <- element_text(size = 21, color = "black", face = "bold")
+  plots$global$legend.title <- element_text(size = 20)
+  plots$global$legend.text <- element_text(size = 18)
+  plots$global$plot.tag <- element_text(size = 36, face = "bold")
   
-  # Aversive Y Break Positions
-  plots$y.axis$avers$breaks <- seq(from = 0, to = 100, by = 25) 
-  # Aversive Y Labels
-  plots$y.axis$avers$labels <- as.character(plots$y.axis$avers$breaks)
+  ## Positioning ####
+  plots$global$axis.title.y <- element_text(margin = margin(t = 0, r = 18, b = 0, l = 0))
+  plots$global$axis.title.x <- element_text(margin = margin(t = 13, r = 0, b = 0, l = 0))
+  plots$global$plot.tag.position <- c(0.05, 0.95) # Y, X from top and from left
+  plots$global$legend.position <- c(0.25, .85)
+  
+  ## Aesthetics ####
+  plots$global$axis.line <- element_line(size = 1.3)
+  plots$global$axis.ticks <- element_line(size = 1.3, color = "black")
+  plots$global$axis.ticks.length <- unit(0.2, "cm")
+  plots$global$legend.key.size <- unit(1.5, "cm")
+  
+  
+  ## Data Points ####
+  
+  plots$global$pt.size <- 6 # point size
+  plots$global$pt.alpha <- 0.75# opacity proportion
+  plots$global$overall$pt.shapes <- c(17, 18, 16, 15) # vector of shape numbers
+  plots$global$total.e$pt.shapes <- c(16, 15) # vector of shape numbers
+  
+  ## Trend Lines ####
+  
+  plots$global$line.size <- 1.5 # line thickness
+  plots$global$overall$line.types <- c("dashed", "dashed", "solid", "solid") # vector of line type strings e.g. "solid" or "dashed"
+  plots$global$total.e$line.types <- c("solid", "solid") # vector of line type strings e.g. "solid" or "dashed"
+  
+  ## Error Ribbon ####
+  
+  plots$global$rib.edge.color <- NA # NA suppresses edges of ribbon
+  plots$global$rib.alpha <- 0.25 # Opacity proportion
+  plots$global$overall$rib.color <- c("#F8C8C8", # vector of color hex codes or names
+                                      "#82BFC4",
+                                      "#F8766D",
+                                      "#00BFC4") 
+  plots$global$total.e$rib.color <- c("#F8766D", # vector of color hex codes or names
+                                      "#00BFC4") 
+  
+  ## Group ####
+  
+    # Line & Point Labels
+    plots$global$overall$labels <- c('Adolescent+CTRL' , # vector of strings
+                                     'Adult+CTRL',
+                                     'Adolescent+IAE',
+                                     'Adult+IAE')
     
-  # Hedonic Y Break Positions
-  plots$y.axis$hedon$breaks <- seq(0, 550, 50)
-  # Hedonic Y Labels
-  plots$y.axis$hedon$labels <- as.character(ifelse(plots$y.axis$hedon$breaks == 0 |
-                                              plots$y.axis$hedon$breaks %% 100 == 0,
-                                              plots$y.axis$hedon$breaks,
-                                              "")) # makes every other label ""
+    plots$global$total.e$labels <- c('Adolescent+IAE', # vector of strings
+                                     'Adult+IAE')
+    
+    # Line & Point Colors
+    plots$global$overall$colors <- c("#F8C8C8", # vector of color hex codes or names
+                                     "#82BFC4", 
+                                     "#F8766D", 
+                                     "#00BFC4")
+    
+    plots$global$total.e$colors <- c("#F8766D", # vector of color hex codes or names
+                                     "#00BFC4")
+
+
+# Y AXIS ###
+  
+  ## Aversive ####
+  
+    # Break Positions
+    plots$y.axis$avers$breaks <- seq(from = 0, to = 100, by = 25) 
+    # Labels
+    plots$y.axis$avers$labels <- as.character(plots$y.axis$avers$breaks)
+    # Limits
+    plots$y.axis$avers$lims <- c(0, 110)
+    
+  ## Hedonic ####
+    
+    # Break Positions
+    plots$y.axis$hedon$breaks <- seq(0, 550, 50)
+    # Labels
+    plots$y.axis$hedon$labels <- as.character(ifelse(plots$y.axis$hedon$breaks == 0 |
+                                                plots$y.axis$hedon$breaks %% 100 == 0,
+                                                plots$y.axis$hedon$breaks,
+                                                "")) # makes every other label ""
+    # Limits
+    plots$y.axis$hedon$lims <- c(0, 580)
 
   
-# X AXIS BREAKS & LABELS ####
+# X AXIS####
   
   ## Ethanol ####
   
-    # X Break Positions for Concentration
+    # Break Positions for Concentration
     plots$eth$x.axis$overall$breaks <- sort(unique(data$eth$ctrl$Concentration))
-    # X Labels for Concentration
+    # Labels for Concentration
     plots$eth$x.axis$overall$labels <- as.character(plots$eth$x.axis$overall$breaks)
+    # Overall X Limits
+    plots$eth$x.axis$overall$lims <- c(0, 41)
     
-    # X Break Positions for Total Ethanol Consumed
+    # Break Positions for Total Ethanol Consumed
     plots$eth$x.axis$total.e$breaks <- seq(0, 125, 25)
-    # X Labels for Total Ethanol Consumed
+    # Labels for Total Ethanol Consumed
     plots$eth$x.axis$total.e$labels <- as.character(plots$eth$x.axis$total.e$breaks)
+    # Total Ethanol X Limits
+    plots$eth$x.axis$total.e$lims <- c(0, 130)
     
   ## Sucrose ####
     
@@ -40,18 +120,24 @@
     plots$suc$x.axis$overall$breaks <- sort(unique(data$suc$ctrl$molarity))
     # X Labels for Molarity
     plots$suc$x.axis$overall$labels <- as.character(plots$suc$x.axis$overall$breaks)
+    # Overall X Limits
+    plots$suc$x.axis$overall$lims <- c(0, 1)
     
     # X Break Positions for Total Ethanol Consumed
     plots$suc$x.axis$total.e$breaks = seq(0, 125, 25)
     # X Labels for Total Ethanol Consumed
     plots$suc$x.axis$total.e$labels = as.character(plots$suc$x.axis$total.e$breaks)
-    
+    # Total Ethanol X Limits
+    plots$suc$x.axis$total.e$lims <- c(0, 130)
+     
   ## Water ####
     
     # X Break Positions for Total Ethanol Consumed
     plots$h2o$x.axis$total.e$breaks = seq(0, 125, 25)
     # X Labels for Total Ethanol Consumed
     plots$h2o$x.axis$total.e$labels = as.character(plots$h2o$x.axis$total.e$breaks)
+    # Total Ethanol X Limits
+    plots$h2o$x.axis$total.e$lims <- c(0, 130)
 
         
 # EFFECTS, CONVIDENCE INTERVALS, & NUMBER OF X-LEVELS OF LINES FOR CURVES ####
