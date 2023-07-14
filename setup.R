@@ -158,8 +158,8 @@ cat("###########################################################################
       data$eth$no.ctrl <- subset(data$eth$ctrl, Condition != "CTRL")
     
     # View your data frames in RStudio
-    View(data$eth$ctrl)
-    View(data$eth$no.ctrl)
+    #View(data$eth$ctrl)
+    #View(data$eth$no.ctrl)
     
   ## Subset Sucrose Data ####
     # With Controls
@@ -172,18 +172,22 @@ cat("###########################################################################
     data$suc$no.ctrl <- subset(data$suc$ctrl, Condition != "CTRL")
     
     # View your data frames in RStudio
-    View(data$suc$ctrl)
-    View(data$suc$no.ctrl)
+    #View(data$suc$ctrl)
+    #View(data$suc$no.ctrl)
   
   ## Subset Water Data ####
     # With Controls
     data$h2o$ctrl <- subset(data$raw, Substance == "Water1" | Substance == "Water2")
       # Get rid of the 4 levels of Substance inherited from the original dataset
       data$h2o$ctrl$Substance <- factor(data$h2o$ctrl$Substance)
+      data$h2o$ctrl$trial <- dplyr::recode(data$h2o$ctrl$Substance,
+                                          "Water1" = "Trial 1",
+                                          "Water2" = "Trial 2")
       # Adjust contrasts to sum-to-zero now that there are 2 factors
       contrasts(data$h2o$ctrl$Substance)=contr.sum(2)
       contrasts(data$h2o$ctrl$Substance)
-    
+
+      
     # No Controls
       # Subset rats that could drink ethanol from rats that never had the opportunity
     data$h2o$no.ctrl <- subset(data$h2o$ctrl, Condition != "CTRL")      
@@ -214,13 +218,13 @@ cat("###########################################################################
       # Center molarity
       data$suc$ctrl$c.molarity <- data$suc$ctrl$molarity - mean(data$suc$ctrl$molarity)
       data$suc$no.ctrl$c.molarity <- data$suc$no.ctrl$molarity - mean(data$suc$no.ctrl$molarity)
-      #center TOTAL.ETOH.Swap.Consumed..g.kg.
+      # center TOTAL.ETOH.Swap.Consumed..g.kg.
       data$suc$no.ctrl$c.totale <- data$suc$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg. - mean(data$suc$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg.)
     
     
     # Water
-    #center TOTAL.ETOH.Swap.Consumed..g.kg.
-    data$h2o$no.ctrl$c.totale <- data$h2o$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg.-mean(data$h2o$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg.)
+      # center TOTAL.ETOH.Swap.Consumed..g.kg.
+      data$h2o$no.ctrl$c.totale <- data$h2o$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg. - mean(data$h2o$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg.)
     
     # Save the workspace
     save.image("ABHV_workspace.RData")
