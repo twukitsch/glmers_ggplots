@@ -20,5 +20,10 @@ source("graph_setup.R")
 # RUN ETHANOL graphs
 source("ethanol_graphs.R")
 
+# RUN SUCROSE graphs
+source("ethanol_graphs.R")
+
+
+
 # SAVE WORKSPACE
 save.image("ABHV_workspace.RData")

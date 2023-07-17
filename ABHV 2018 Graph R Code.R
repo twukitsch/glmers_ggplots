@@ -289,7 +289,7 @@ library(patchwork)
                             #se is std err and the level is the confidence level. .68 = actual std err for conf int. lower and upper.
                             se=list(level=.68),
                             #the xlevels command is used to increase the number of points calculated for the total ethanol (default = 5)
-                            xlevels=list(c.totale=20,c.conc=c(.05-mean(mydetoh.noCTRL$recoded.conc),
+                            xlevels=list(c.totale = 20 ,c.conc=c(.05-mean(mydetoh.noCTRL$recoded.conc),
                                                               .20-mean(mydetoh.noCTRL$recoded.conc),
                                                               .40-mean(mydetoh.noCTRL$recoded.conc))))
     EaversTot.eff.df <-as.data.frame(EaversTot.eff)

@@ -240,7 +240,7 @@
       
       #### Total Ethanol ####
         # Mean center xlevel graphing points 
-        plots$suc$x.axis$total.e$xlvls <- c(.05, .20, .40) - mean(data$suc$no.ctrl$molarity) # the points along the curve you want to use to get good error ribbons.
+        plots$suc$x.axis$total.e$xlvls <- c(.01, .1, 1) - mean(data$suc$no.ctrl$molarity) # the points along the curve you want to use to get good error ribbons.
         
         # Pull the effects from model & calculate confidence intervals for graphing
         plots$suc$avers$total.e$fx <- Effect(c("c.molarity", "Age", "c.totale"),
