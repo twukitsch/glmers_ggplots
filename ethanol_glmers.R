@@ -1,3 +1,9 @@
+# INITIAL OBJECT SETUP
+
+  # Add lists for storage
+  models <- list()
+  compars <- list()
+
 # ETHANOL AVERSIVES ANALYSES####
 
 # Add Divider

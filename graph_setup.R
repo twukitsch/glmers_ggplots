@@ -6,37 +6,42 @@
 
 # GLOBAL ATTRIBUTES ####
   
-  ## Text #### (!) Figure out what each of these do!!!!!
-  plots$global$strip.text.x <- element_text(size = 18, face = "bold")
-  plots$global$axis.title <- element_text(size = 22)
-  plots$global$axis.text <- element_text(size = 21, color = "black", face = "bold")
-  plots$global$legend.title <- element_text(size = 20)
-  plots$global$legend.text <- element_text(size = 18)
-  plots$global$plot.tag <- element_text(size = 36, face = "bold")
+  ## Text ####
+  plots$global$strip.text.x <- element_text(size = 17, face = "bold") # Modify label text for facets
+  plots$global$axis.title <- element_text(size = 18) # Modify axis title text
+  plots$global$axis.text <- element_text(size = 17, color = "black", face = "bold") # Modify axis value text
+  plots$global$legend.title <- element_text(size = 16) # Modify legend title text
+  plots$global$legend.text <- element_text(size = 14) # Modify legend value text
+  plots$global$plot.tag <- element_text(size = 32, face = "bold") # Modify the plot tag (e.g. "A.") text
+  plots$global$plot.title <- element_text(size = 18, hjust = 0.5)
   
   ## Positioning ####
-  plots$global$axis.title.y <- element_text(margin = margin(t = 0, r = 18, b = 0, l = 0))
-  plots$global$axis.title.x <- element_text(margin = margin(t = 13, r = 0, b = 0, l = 0))
-  plots$global$plot.tag.position <- c(0.05, 0.95) # Y, X from top and from left
-  plots$global$legend.position <- c(0.25, .85)
+  plots$global$axis.title.x <- element_text(margin = margin(t = 13, r = 0, b = 0, l = 0)) # Adjusts margins around axis title text
+  plots$global$axis.title.y <- element_text(margin = margin(t = 0, r = 18, b = 0, l = 0)) # Adjusts margins around axis title text
+    # Overall
+    plots$global$overall$plot.tag.position <- c(0.05, 0.95) # X increasing from left, Y and increasing from bottom
+    plots$global$overall$legend.position <- c(0.275, .85) # X increasing from left, Y and increasing from bottom
+    # Total Ethanol
+    plots$global$total.e$plot.tag.position <- c(0.035, 0.95) # X increasing from left, Y and increasing from bottom
+    plots$global$total.e$legend.position <- c(0.125, .85) # X increasing from left, Y and increasing from bottom
   
   ## Aesthetics ####
-  plots$global$axis.line <- element_line(size = 1.3)
-  plots$global$axis.ticks <- element_line(size = 1.3, color = "black")
+  plots$global$axis.line <- element_line(size = 1.3) # Thickness of axis lines
+  plots$global$axis.ticks <- element_line(size = 1.3, color = "black") # Thickness & color of axis ticks 
   plots$global$axis.ticks.length <- unit(0.2, "cm")
   plots$global$legend.key.size <- unit(1.5, "cm")
-  
+  plots$global$panel.spacing <- unit(1.75, "lines")
   
   ## Data Points ####
   
-  plots$global$pt.size <- 6 # point size
+  plots$global$pt.size <- 4 # point size
   plots$global$pt.alpha <- 0.75# opacity proportion
   plots$global$overall$pt.shapes <- c(17, 18, 16, 15) # vector of shape numbers
   plots$global$total.e$pt.shapes <- c(16, 15) # vector of shape numbers
   
   ## Trend Lines ####
   
-  plots$global$line.size <- 1.5 # line thickness
+  plots$global$linewidth <- 1.5 # line thickness
   plots$global$overall$line.types <- c("dashed", "dashed", "solid", "solid") # vector of line type strings e.g. "solid" or "dashed"
   plots$global$total.e$line.types <- c("solid", "solid") # vector of line type strings e.g. "solid" or "dashed"
   
@@ -55,7 +60,7 @@
   
     # Line & Point Labels
     plots$global$overall$labels <- c('Adolescent+CTRL' , # vector of strings
-                                     'Adult+CTRL',
+                                     'Adult+CTRL',       # Common labels combine together in the legend
                                      'Adolescent+IAE',
                                      'Adult+IAE')
     
@@ -163,14 +168,14 @@
         plots$eth$avers$overall$fx
       
       #### Total Ethanol ####
-        # Mean center xlevel graphing points 
+        # Mean center xlevel graphing points for ALL of Ethanol's, Total Ethanol graphs
         plots$eth$x.axis$total.e$xlvls <- c(.05, .20, .40) - mean(data$eth$no.ctrl$recoded.conc) # the points along the curve you want to use to get good error ribbons.
         
         # Pull the effects from model & calculate confidence intervals for graphing
         plots$eth$avers$total.e$fx <- Effect(c("c.conc", "Age", "c.totale"),
                                        models$eth$avers$total.e,
                                        se = list(level = .68), # se is std err and the level is the confidence level. .68 = actual std err for conf int. lower and upper.
-                                       xlevels = list(c.conc = plots$eth$avers$total.e$xlvls))# the xlevels command is used to increase the number of points calculated for the total ethanol (default = 5)
+                                       xlevels = list(c.totale = 20, c.conc = plots$eth$x.axis$total.e$xlvls))# the xlevels command is used to increase the number of points calculated for the total ethanol (default = 5)
         
         # Convert effect object to data frame
         plots$eth$avers$total.e$fx <- as.data.frame(plots$eth$avers$total.e$fx)
@@ -202,7 +207,7 @@
         plots$eth$hedon$total.e$fx <- Effect(c("c.conc", "Age", "c.totale"),
                                        models$eth$hedon$total.e,
                                        se = list(level = .68), # se is std err and the level is the confidence level. .68 = actual std err for conf int. lower and upper.
-                                       xlevels = list(c.conc = plots$eth$x.axis$total.e$xlvls))# the xlevels command is used to increase the number of points calculated for the total ethanol (default = 5)
+                                       xlevels = list(c.totale = 20, c.conc = plots$eth$x.axis$total.e$xlvls))# the xlevels command is used to increase the number of points calculated for the total ethanol (default = 5)
         
         # Convert effect object to data frame
         plots$eth$hedon$total.e$fx <- as.data.frame(plots$eth$hedon$total.e$fx)
@@ -241,7 +246,7 @@
         plots$suc$avers$total.e$fx <- Effect(c("c.molarity", "Age", "c.totale"),
                                        models$suc$avers$total.e,
                                        se=list(level=.68), # se is std err and the level is the confidence level. .68 = actual std err for conf int. lower and upper.
-                                       xlevels=list(c.molarity = plots$suc$x.axis$total.e$xlvls))# the xlevels command is used to increase the number of points calculated for the total ethanol (default = 5)
+                                       xlevels=list(c.totale = 20, c.molarity = plots$suc$x.axis$total.e$xlvls))# the xlevels command is used to increase the number of points calculated for the total ethanol (default = 5)
         
         # Convert effect object to data frame
         plots$suc$avers$total.e$fx <- as.data.frame(plots$suc$avers$total.e$fx)
@@ -273,7 +278,7 @@
         plots$suc$hedon$total.e$fx <- Effect(c("c.molarity", "Age", "c.totale"),
                                        models$suc$hedon$total.e,
                                        se=list(level=.68), # se is std err and the level is the confidence level. .68 = actual std err for conf int. lower and upper.
-                                       xlevels=list(c.molarity = plots$suc$x.axis$total.e$xlvls))# the xlevels command is used to increase the number of points calculated for the total ethanol (default = 5)
+                                       xlevels=list(c.totale = 20, c.molarity = plots$suc$x.axis$total.e$xlvls))# the xlevels command is used to increase the number of points calculated for the total ethanol (default = 5)
         
         # Convert effect object to data frame
         plots$suc$hedon$total.e$fx <- as.data.frame(plots$suc$hedon$total.e$fx)

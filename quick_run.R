@@ -1,3 +1,7 @@
+# SET WORKING DIRECTORY
+setwd("C:/Users/kieri/Documents/ABHV")
+getwd()
+
 # RUN SETUP (download & load necessary packages, import data, subset & tweak data)
 source("setup.R")
 
@@ -10,9 +14,11 @@ source("sucrose_glmers.R")
 # RUN WATER glmers
 source("water_glmers.R")
 
-# SAVE WORKSPACE
-save.image("ABHV_workspace.RData")
-
 # RUN GRAPH SETUP
 source("graph_setup.R")
 
+# RUN ETHANOL graphs
+source("ethanol_graphs.R")
+
+# SAVE WORKSPACE
+save.image("ABHV_workspace.RData")

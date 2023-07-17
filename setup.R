@@ -105,7 +105,19 @@
         install.packages("effects")
         library(effects)
       }
+      
+      # Load package or install effects and load if not present
+      if (!require(gridExtra)) {
+        install.packages("gridExtra")
+        library(gridExtra)
+      }
     
+      # Load package or install patchwork and load if not present
+      if (!require(patchwork)) {
+        install.packages("patchwork")
+        library(patchwork)
+      }
+      
       # Add Divider
       cat("################################################################################\n
 ############ PACKAGES DOWNLOADED & LOADED - CHECK OUTPUT FOR ERRORS ############\n
@@ -228,10 +240,7 @@ cat("###########################################################################
     
     # Save the workspace
     save.image("ABHV_workspace.RData")
-    
-# Add lists for storage
-    models <- list()
-    compars <- list()
+
     
     # Add Divider
     cat("################################################################################\n

@@ -5,7 +5,7 @@ date: "July 2023"
 output: github_document
 ---
 
-```{r setup, include=FALSE}
+```{r setup, include = F}
 knitr::opts_chunk$set(echo = T,
                       results = "hide",
                       error = F,
@@ -137,7 +137,7 @@ if (Sys.which("make") == "") {  # Check to see if "make" command from rtools is 
 
 ```{r Working Directory}
 # Set your working directory to your project folder and check that it is correct
-setwd("C:/Users/kieri/Documents/ABHV/")
+setwd("C:/Users/kieri/Documents/ABHV")
 getwd()
 ```
 
@@ -283,11 +283,11 @@ And I have performed my coding adjustments. However, I still need to further pre
     data$h2o$no.ctrl$c.totale <- data$h2o$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg.-mean(data$h2o$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg.)
     
 # Save the workspace
-save.image("ABHV_workspace.RData")
+  save.image("ABHV_workspace.RData")
 
 ```
 
-## Models (Analyses) & 
+## Modeling
 
 To accommodate and store each list object returned by our models I need another hierarchical list object with a similar structure to the data above. However, there is more nuance because I am performing analyses for hedonic and aversive responses and, for each of those, I have analyses that involve different variables that were calculated from modeling other related data (total ethanol, MR, and MR3). So I will need a different list structure, and I may want to generate the list structure in advance so I can populate it with a list. It should look something like this:
 
@@ -322,42 +322,17 @@ To accommodate and store each list object returned by our models I need another 
       * total ethanol
       * Mean Alcohol Consumed & Rate of Change
       
-This is count data and has some missing data due to participant attrition and has a continuous predictor variable that represents my repeated measure (Concentration) since each animal reacted to each concentration of each substance. Therefore a poisson Generalized Linear Mixed Effects Regression (GLMER) is appropriate for analysis. There is some nesting in the structure of the data and for reasons related to understanding for the audience the publication was for I opted to do two separate analyses on this data set instead of properly nesting it. We will use ethanol as an illustrative example because it also has two models that I wanted to compare.
+This is count data and has some missing data due to participant attrition and has a continuous predictor variable that represents my repeated measure (Concentration) since each animal reacted to each concentration of each substance. Therefore a poisson Generalized Linear Mixed Effects Regression (glmer) is appropriate for analysis. There is some nesting in the structure of the data and for reasons related to understanding for the audience the publication was for I opted to do two separate analyses on this data set instead of properly nesting it. We will use ethanol as an illustrative example because it also has two models that I wanted to compare. First, I need some additional lists to store and organize our data in.
 
 ```{r Model and Planned Comparison Lists}
 # List setup ####
 
 ## Models ####
 models <- list()
-  models$eth  <- list()
-    models$eth$avers  <- list()
-      models$eth$avers$overall  <- list() # Delete
-      models$eth$avers$total.e  <- list() # Delete
-      models$eth$avers$MR1  <- list() # Delete
-      models$eth$avers$MR3  <- list() # Delete
-    models$eth$hedon  <- list()
-      models$eth$hedon$overall  <- list() # Delete
-      models$eth$hedon$total.e  <- list() # Delete
-      models$eth$hedon$MR1  <- list() # Delete
-      models$eth$hedon$MR3  <- list() # Delete
-  models$suc  <- list()
-    models$suc$avers  <- list()
-    models$suc$hedon  <- list()
-  models$h2o  <- list()
-    models$h2o$avers  <- list()
-    models$h2o$hedon  <- list()
 
 ## Comparisons ####
 compars <- list()
-  compars$eth  <- list()
-    compars$eth$avers  <- list()
-    compars$eth$hedon  <- list()
-  compars$suc  <- list()
-    compars$suc$avers  <- list()
-    compars$suc$hedon  <- list()
-  compars$h2o  <- list()
-    compars$h2o$avers  <- list()
-    compars$h2o$hedon  <- list()
+
 ```
 
 
