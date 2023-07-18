@@ -45,7 +45,7 @@
   plots$global$overall$line.types <- c("dashed", "dashed", "solid", "solid") # vector of line type strings e.g. "solid" or "dashed"
   plots$global$total.e$line.types <- c("solid", "solid") # vector of line type strings e.g. "solid" or "dashed"
   
-  ## Error Ribbon ####
+  ## Error Ribbons & Bars ####
   
   plots$global$rib.edge.color <- NA # NA suppresses edges of ribbon
   plots$global$rib.alpha <- 0.25 # Opacity proportion
@@ -55,6 +55,7 @@
                                       "#00BFC4") 
   plots$global$total.e$rib.color <- c("#F8766D", # vector of color hex codes or names
                                       "#00BFC4") 
+  plots$global$err.bar.width <- 0.2
   
   ## Group ####
   
@@ -302,7 +303,7 @@
         # Convert effect object to data frame
         plots$h2o$avers$overall$fx <- as.data.frame(plots$h2o$avers$overall$fx)
         # Add trial values
-        plots$h2o$avers$overall$fx$trial <- rep(c(1, 2), 4)
+        plots$h2o$avers$overall$fx$trial <- rep(c("Trial 1", "Trial 2"), 4)
         plots$h2o$avers$overall$fx
       
       #### Total Ethanol ####
@@ -317,6 +318,8 @@
         plots$h2o$avers$total.e$fx <- as.data.frame(plots$h2o$avers$total.e$fx)
         # Get original totale values (un-center the variable)
         plots$h2o$avers$total.e$fx$totale <- (plots$h2o$avers$total.e$fx$c.totale + mean(data$h2o$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg.))
+        # Add trial values
+        plots$h2o$avers$total.e$fx$trial <- rep(c("Trial 1", "Trial 2"), 40)
         plots$h2o$avers$total.e$fx
         
     ### Hedonic ####
@@ -331,7 +334,7 @@
         # Convert effect object to data frame
         plots$h2o$hedon$overall$fx <- as.data.frame(plots$h2o$hedon$overall$fx)
         # Add trial values
-        plots$h2o$hedon$overall$fx$trial <- rep(c(1, 2), 4)
+        plots$h2o$hedon$overall$fx$trial <- rep(c("Trial 1", "Trial 2"), 4)
         plots$h2o$hedon$overall$fx
       
       #### Total Ethanol ####
@@ -346,6 +349,8 @@
         plots$h2o$hedon$total.e$fx <- as.data.frame(plots$h2o$hedon$total.e$fx)
         # Get original totale values (un-center the variable)
         plots$h2o$hedon$total.e$fx$totale <- (plots$h2o$hedon$total.e$fx$c.totale + mean(data$h2o$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg.))
+        # Add trial values
+        plots$h2o$hedon$total.e$fx$trial <- rep(c("Trial 1", "Trial 2"), 40)
         plots$h2o$hedon$total.e$fx
 
 
