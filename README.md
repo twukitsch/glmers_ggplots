@@ -122,13 +122,13 @@ the best (lowest) AIC/BIC scores for interpretation.
 This yields the following formulas for the Ethanol Consumption models:
 
 - Aversive Responses
-  - $Aversive~Responses = exp(Concentration * Age * Total Ethanol Consumed + (Concentration | RatID))$
+  - $Aversive~Responses = exp(Concentration * Age * Total~Ethanol~Consumed + (Concentration | RatID))$
   - $Aversive~Responses = exp(Concentration * Age * [MAC + RoC] + (Concentration | RatID))$
     (MAC and RoC do not interact with each other)
   - $Aversive~Responses = exp(Concentration * Age * [MAC3 + RoC3] + (Concentration | RatID))$
     (MAC3 and RoC3 do not interact with each other)
 - Hedonic Responses
-  - $Hedonic~Responses = exp(Concentration * Age * Total Ethanol Consumed + (Concentration | RatID))$
+  - $Hedonic~Responses = exp(Concentration * Age * Total~Ethanol~Consumed + (Concentration | RatID))$
   - $Hedonic~Responses = exp(Concentration * Age * [MAC + RoC] + (Concentration | RatID))$
     (MAC and RoC do not interact with each other)
   - $Hedonic~Responses = exp(Concentration * Age * [MAC3 + RoC3] + (Concentration | RatID))$
