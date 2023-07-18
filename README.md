@@ -3,9 +3,150 @@ Masters Example for Running GLMER and LMER Models with lme4
 TJ Wukitsch
 July 2023
 
-# DATA BACKGROUND AND STRUCTURE…
+# BACKGROUND
 
-blah blah here
+These data are from [Wukitsch & Cain, 2021](10.1007/s00213-021-05805-y)
+and are used here as an example of how to use ggplot2 to graph
+Generalized Linear Mixed Effects Models using R. In this case, we have
+count data so we will use a Poisson model. The `ggplot2` library along
+with a few others, were used to produce the images in the aforementioned
+publication. You can make ones like it for your glmer models too!
+
+## Understanding the Data
+
+The portion of the study these data originate from had 2 independent
+(output) variables: Total Aversive Responses & Total Hedonic Responses.
+These variables are counts of the number of behaviors emitted in
+response to an orally infused fluid and are the behavioral results of
+the Taste Reactivity Test. Prior to undergoing Taste Reactivity testing,
+adult and adolescent Long-Evans rats were allowed Intermittent
+(voluntary) Access to drink Ethanol (IAE) Monday, Wednesday, and Friday.
+The amount and pattern of drinking over time during IAE were dependent
+(predictor) variables in some of our models in addition to their Age
+group. Control animals received only water during IAE and were not
+exposed to ethanol until Taste Reactivity testing. During Taste
+Reactivity testing 3 substances were orally infused: Water on the first
+and last day of Taste Reactivity testing, Ethanol (at 5, 20, and 40% v/v
+concentrations), and Sucrose (at .01, .1, and 1 molar concentrations).
+We will focus on the Ethanol data here and want to treat all variables
+as they are… No categorizing our numeric continua into factors. This
+yields the following set of variables for our models:
+
+**Independent (Outcome) Variables:**
+
+- Total Aversive Responses (count data)
+- Total Hedonic Responses (count data)
+
+**Dependent (Predictor) Variables:**
+
+- **Age** (during IAE period)
+  - Adult
+  - Adolescent
+- Intermittent Ethanol Access (IAE) **Condition**
+  - IAE (Had access to ethanol during IAE period)
+    - **Ethanol Consumption** during IAE period *(A NESTED VARIABLE)*
+  - CTRL (Did not have access to ethanol prior to Taste Reactivity
+    Testing)
+- **Concentration** of Ethanol
+  - 5%
+  - 20%
+  - 40%
+
+![](README_files/Experimental%20Structure.png)
+
+## Modeling Approach
+
+This nested data structure leaves us with some options. We can either 1.
+use a nested model or 2. perform two separate analyses of the same data
+that answer different questions. It all depends on your audience. We
+decided it was better for our audience to keep it straightforward and
+use the two analysis approach. The first model will answer questions
+about overall differences between our IAE and our CTRL groups, Age, and
+Concentration. The second will be able to answer questions about
+individual differences in ethanol consumption during IAE and how those
+may interact with Age and Concentration to alter taste reactivity. Thus,
+the formulas for our `glmer` models are as follows:
+
+**Overall Models**
+
+- Independent (AKA Predicted AKA Outcome) Variables
+  - Total Aversive Responses
+  - Total Hedonic Responses
+- Fixed Effect (AKA Main Effect) Variables (Full Factorial)
+  - Concentration
+  - Age
+  - Condition
+- Random Effect Variables
+  - Intercept (RatID)
+  - (Slope of) Concentration
+
+This yields the following formulas for the Overall models:
+
+- $Aversive~Responses = exp(Age * Condition * Concentration + (Concentration | RatID))$
+- $Hedonic~Responses = exp(Age * Condition * Concentration + (Concentration | RatID))$
+
+**Note:** We haven’t yet determined which measure of ethanol consumption
+to use for the Ethanol Consumption Models. We could use the sum total of
+all ethanol consumed during IAE (Total Ethanol), or we could use the
+intercept (Mean Alcohol Consumed; MAC) and slope of a line that best
+fits each individual’s drinking during IAE across time (Rate of Change;
+RoC). We used lmers to calculate these values (but that is beyond the
+scope of the present example). An interesting quirk of adolescent
+drinking during IAE was also of interest. Adolescents had very high
+drinking on the first day. This created some non-monotonicity
+(non-linearity) in our data so, we wondered if removing the first day
+would impact the RoC substantially. Thus, we had an additional model
+that did not include the first day of drinking when calculating RoC and
+MAC (RoC3 and MAC3, respectively). Our plan was to compare the models
+predicting responses to orally infused ethanol and use the model with
+the best (lowest) AIC/BIC scores for interpretation.
+
+**Ethanol Consumption Models**
+
+- Independent (AKA Predicted AKA Outcome) Variables
+  - Total Aversive Responses
+  - Total Hedonic Responses
+- Fixed Effect (AKA Main Effect) Variables (Full Factorial where
+  appropriate)
+  - Concentration
+  - Age
+  - Ethanol Consumption
+    - Total Ethanol Consumed (grams ethanol/kg bodyweight; during IAE)
+    - MAC & RoC (Consumption Pattern during IAE)
+    - MAC3 & RoC3 (Consumption Pattern starting at day 3 \[the second
+      day of drinking\])
+- Random Effect Variables
+  - Intercept (RatID)
+  - (Slope of) Concentration
+
+This yields the following formulas for the Ethanol Consumption models:
+
+- Aversive Responses
+  - $Aversive~Responses = exp(Concentration * Age * Total Ethanol Consumed + (Concentration | RatID))$
+  - $Aversive~Responses = exp(Concentration * Age * [MAC + RoC] + (Concentration | RatID))$
+    (MAC and RoC do not interact with each other)
+  - $Aversive~Responses = exp(Concentration * Age * [MAC3 + RoC3] + (Concentration | RatID))$
+    (MAC3 and RoC3 do not interact with each other)
+- Hedonic Responses
+  - $Hedonic~Responses = exp(Concentration * Age * Total Ethanol Consumed + (Concentration | RatID))$
+  - $Hedonic~Responses = exp(Concentration * Age * [MAC + RoC] + (Concentration | RatID))$
+    (MAC and RoC do not interact with each other)
+  - $Hedonic~Responses = exp(Concentration * Age * [MAC3 + RoC3] + (Concentration | RatID))$
+    (MAC3 and RoC3 do not interact with each other)
+
+# Coding Approach Goals
+
+Now that we understand our data and our modeling approach, we need to
+consider our order of operations and goals for our data.
+
+GOALS:
+
+1.  Organize and Setup Data Workspace & Structures
+2.  Model Data (Generalized Linear Mixed Effects Models) & Organize
+    Output Objects
+3.  Perform Comparisons, Obtain Trend Info., & Organize Output objects
+4.  Create and Store Publication-Quality Nested Multi-panel Graphs in
+    ggplot2
 
 # Workspace Setup
 
@@ -134,7 +275,7 @@ if (Sys.which("make") == "") {  # Check to see if "make" command from rtools is 
 
 ``` r
 # Set your working directory to your project folder and check that it is correct
-setwd("C:/Users/kieri/Documents/ABHV/")
+setwd("C:/Users/kieri/Documents/ABHV")
 getwd()
 ```
 
@@ -249,16 +390,16 @@ Now we have our data list object with the following hierarchical
 structure:
 
 - `data`
-  - `$raw`
-  - `$eth`
-    - `$ctrl`
-    - `$no.ctrl`
-  - `$suc`
-    - `$ctrl`
-    - `$no.ctrl`
-  - `$h2o`
-    - `$ctrl`
-    - `$no.ctrl`
+  - `data$raw`
+  - `data$eth`
+    - `data$eth$ctrl`
+    - `data$eth$no.ctrl`
+  - `data$suc`
+    - `data$suc$ctrl`
+    - `data$suc$no.ctrl`
+  - `data$h2o`
+    - `data$h2o$ctrl`
+    - `data$h2o$no.ctrl`
 
 And I have performed my coding adjustments. However, I still need to
 further prepare our data to avoid issues during analysis such as
@@ -273,43 +414,36 @@ and save my workspace.
 
   # Ethanol
     # center concentration to avoid issues with variance inflation factor (VIF) tolerances
-    data$eth$ctrl$c.conc <- data$eth$ctrl$recoded.conc-mean(data$eth$ctrl$recoded.conc)
+    data$eth$ctrl$c.conc <- data$eth$ctrl$recoded.conc - mean(data$eth$ctrl$recoded.conc)
     # center TOTAL.ETOH.Swap.Consumed..g.kg. to avoid issues with variance inflation factor (VIF) tolerances
-    data$eth$no.ctrl$c.totale <- data$eth$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg.-mean(data$eth$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg.)
+    data$eth$no.ctrl$c.totale <- data$eth$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg. - mean(data$eth$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg.)
     # center concentration fto avoid issues with variance inflation factor (VIF) tolerances
-    data$eth$no.ctrl$c.conc <- data$eth$no.ctrl$recoded.conc-mean(data$eth$no.ctrl$recoded.conc)
+    data$eth$no.ctrl$c.conc <- data$eth$no.ctrl$recoded.conc - mean(data$eth$no.ctrl$recoded.conc)
     
     # center MAC and ROC to avoid issues with variance inflation factor (VIF) tolerances
-    data$eth$no.ctrl$c.MAC <- data$eth$no.ctrl$MAC-mean(data$eth$no.ctrl$MAC)
-    data$eth$no.ctrl$c.ROC <- data$eth$no.ctrl$ROC-mean(data$eth$no.ctrl$ROC)
-    data$eth$no.ctrl$c.MAC3 <- data$eth$no.ctrl$MAC3-mean(data$eth$no.ctrl$MAC3)
-    data$eth$no.ctrl$c.ROC3 <- data$eth$no.ctrl$ROC3-mean(data$eth$no.ctrl$ROC3)
+    data$eth$no.ctrl$c.MAC <- data$eth$no.ctrl$MAC - mean(data$eth$no.ctrl$MAC)
+    data$eth$no.ctrl$c.ROC <- data$eth$no.ctrl$ROC - mean(data$eth$no.ctrl$ROC)
+    data$eth$no.ctrl$c.MAC3 <- data$eth$no.ctrl$MAC3 - mean(data$eth$no.ctrl$MAC3)
+    data$eth$no.ctrl$c.ROC3 <- data$eth$no.ctrl$ROC3 - mean(data$eth$no.ctrl$ROC3)
   
     
   # Sucrose
     # Center molarity to avoid issues with variance inflation factor (VIF) tolerances
-    data$suc$ctrl$c.molarity <- data$suc$ctrl$molarity-mean(data$suc$ctrl$molarity)
-    data$suc$no.ctrl$c.molarity <- data$suc$no.ctrl$molarity-mean(data$suc$no.ctrl$molarity)
+    data$suc$ctrl$c.molarity <- data$suc$ctrl$molarity - mean(data$suc$ctrl$molarity)
+    data$suc$no.ctrl$c.molarity <- data$suc$no.ctrl$molarity - mean(data$suc$no.ctrl$molarity)
     #center TOTAL.ETOH.Swap.Consumed..g.kg. to avoid issues with variance inflation factor (VIF) tolerances
-    data$suc$no.ctrl$c.totale <- data$suc$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg.-mean(data$suc$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg.)
-    #center MAC and ROC for noCTRL subset to avoid issues with variance inflation factor (VIF) tolerances
-    data$suc$no.ctrl$c.MAC <- data$suc$no.ctrl$MAC-mean(data$suc$no.ctrl$MAC)
-    data$suc$no.ctrl$c.ROC <- data$suc$no.ctrl$ROC-mean(data$suc$no.ctrl$ROC)
-    
+    data$suc$no.ctrl$c.totale <- data$suc$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg. - mean(data$suc$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg.)
+
 
   # Water
     #center TOTAL.ETOH.Swap.Consumed..g.kg. to avoid issues with variance inflation factor (VIF) tolerances
     data$h2o$no.ctrl$c.totale <- data$h2o$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg.-mean(data$h2o$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg.)
     
-    #center MAC and ROC for noCTRL subset to avoid issues with variance inflation factor (VIF) tolerances
-    data$h2o$no.ctrl$c.MAC <- data$h2o$no.ctrl$MAC-mean(data$h2o$no.ctrl$MAC)
-    data$h2o$no.ctrl$c.ROC <- data$h2o$no.ctrl$ROC-mean(data$h2o$no.ctrl$ROC)
-
 # Save the workspace
-save.image("ABHV_workspace.RData")
+  save.image("ABHV_workspace.RData")
 ```
 
-## Models (Analyses) &
+## Modeling
 
 To accommodate and store each list object returned by our models I need
 another hierarchical list object with a similar structure to the data
@@ -356,47 +490,22 @@ This is count data and has some missing data due to participant
 attrition and has a continuous predictor variable that represents my
 repeated measure (Concentration) since each animal reacted to each
 concentration of each substance. Therefore a poisson Generalized Linear
-Mixed Effects Regression (GLMER) is appropriate for analysis. There is
+Mixed Effects Regression (glmer) is appropriate for analysis. There is
 some nesting in the structure of the data and for reasons related to
 understanding for the audience the publication was for I opted to do two
 separate analyses on this data set instead of properly nesting it. We
 will use ethanol as an illustrative example because it also has two
-models that I wanted to compare.
+models that I wanted to compare. First, I need some additional lists to
+store and organize our data in.
 
 ``` r
 # List setup ####
 
 ## Models ####
 models <- list()
-  models$eth  <- list()
-    models$eth$avers  <- list()
-      models$eth$avers$overall  <- list() # Delete
-      models$eth$avers$total.e  <- list() # Delete
-      models$eth$avers$MR1  <- list() # Delete
-      models$eth$avers$MR3  <- list() # Delete
-    models$eth$hedon  <- list()
-      models$eth$hedon$overall  <- list() # Delete
-      models$eth$hedon$total.e  <- list() # Delete
-      models$eth$hedon$MR1  <- list() # Delete
-      models$eth$hedon$MR3  <- list() # Delete
-  models$suc  <- list()
-    models$suc$avers  <- list()
-    models$suc$hedon  <- list()
-  models$h2o  <- list()
-    models$h2o$avers  <- list()
-    models$h2o$hedon  <- list()
 
 ## Comparisons ####
 compars <- list()
-  compars$eth  <- list()
-    compars$eth$avers  <- list()
-    compars$eth$hedon  <- list()
-  compars$suc  <- list()
-    compars$suc$avers  <- list()
-    compars$suc$hedon  <- list()
-  compars$h2o  <- list()
-    compars$h2o$avers  <- list()
-    compars$h2o$hedon  <- list()
 ```
 
 Now that we have our lists we can start running our models and
