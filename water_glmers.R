@@ -8,7 +8,7 @@ cat("###########################################################################
   ## Water Aversives GLMER (with EtOH vs CTRL)####
     models$h2o$avers$overall <- glmer(Total.Aversive ~ Substance*Age*Condition 
                                       + (1|RatID), # Intercept Only
-                                      data = data$h2o$ctrl,
+                                      data = ABHVdata$h2o$ctrl,
                                       family = poisson)
 
     summary(models$h2o$avers$overall)
@@ -69,7 +69,7 @@ cat("###########################################################################
   ## Water Aversives GLMER (EtOH Group Only: Total EtOH Consumed) ####
     models$h2o$avers$total.e <- glmer(Total.Aversive ~ Substance*Age*c.totale 
                                       + (1|RatID), # Intercept Only
-                                      data = data$h2o$no.ctrl,
+                                      data = ABHVdata$h2o$no.ctrl,
                                       family = poisson)
  
     # Model did not converge, used code below to extend # of iterations and start from where the previous model left off.
@@ -130,7 +130,7 @@ cat("###########################################################################
   ## Water Hedonics GLMER (with EtOH vs CTRL)####
     models$h2o$hedon$overall <- glmer(Total.Hedonic...MM. ~ Substance*Age*Condition
                                       + (1|RatID),
-                                      data = data$h2o$ctrl,
+                                      data = ABHVdata$h2o$ctrl,
                                       family = poisson)
   
     summary(models$h2o$hedon$overall)
@@ -174,7 +174,7 @@ cat("###########################################################################
   ## Water Hedonics GLMER (EtOH Group Only: Total EtOH Consumed) ######
     models$h2o$hedon$total.e <- glmer(Total.Hedonic...MM. ~ Substance*Age*c.totale 
                                       + (1|RatID),
-                                      data = data$h2o$no.ctrl,
+                                      data = ABHVdata$h2o$no.ctrl,
                                       family = poisson)
   
     summary(models$h2o$hedon$total.e)

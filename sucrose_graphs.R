@@ -14,7 +14,7 @@
                                           shape = interaction(Age, Condition)))+
       
       # Add Raw Data to graph
-      geom_point(data = data$suc$ctrl, 
+      geom_point(data = ABHVdata$suc$ctrl, 
                  aes(x = molarity, y = Total.Aversive),
                  size = plots$global$pt.size,
                  alpha = plots$global$pt.alpha)+
@@ -106,7 +106,7 @@
                                               shape = Age))+
       
       # Add Raw Data to graph
-      geom_point(data = data$suc$no.ctrl,
+      geom_point(data = ABHVdata$suc$no.ctrl,
                  aes(x = TOTAL.ETOH.Swap.Consumed..g.kg.,
                      y = Total.Aversive),
                  size = plots$global$pt.size, 
@@ -224,7 +224,7 @@
                                               shape = interaction(Age, Condition)))+
       
       # Add Raw Data to graph
-      geom_point(data = data$suc$ctrl, 
+      geom_point(data = ABHVdata$suc$ctrl, 
                  aes(x = molarity, y = Total.Hedonic...MM.),
                  size = plots$global$pt.size,
                  alpha = plots$global$pt.alpha)+
@@ -314,7 +314,7 @@
                                               shape = Age))+
       
       # Add Raw Data to graph
-      geom_point(data = data$suc$no.ctrl,
+      geom_point(data = ABHVdata$suc$no.ctrl,
                  aes(x = TOTAL.ETOH.Swap.Consumed..g.kg.,
                      y = Total.Hedonic...MM.),
                  size = plots$global$pt.size, 

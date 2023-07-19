@@ -116,7 +116,7 @@
       facet_grid(.~ trial)+ # Makes the plot multi-panel. One for each level of trial
       
       # Add Raw Data to graph
-      geom_point(data = data$h2o$no.ctrl,
+      geom_point(data = ABHVdata$h2o$no.ctrl,
                  aes(x = TOTAL.ETOH.Swap.Consumed..g.kg.,
                      y = Total.Aversive),
                  size = plots$global$pt.size, 
@@ -318,7 +318,7 @@
       facet_grid(.~ trial)+ # Makes the plot multi-panel. One for each level of trial
       
       # Add Raw Data to graph
-      geom_point(data = data$h2o$no.ctrl,
+      geom_point(data = ABHVdata$h2o$no.ctrl,
                  aes(x = TOTAL.ETOH.Swap.Consumed..g.kg.,
                      y = Total.Hedonic...MM.),
                  size = plots$global$pt.size, 

@@ -138,105 +138,106 @@ cat("###########################################################################
 ################################################################################\n")
 
   ## Data Object & Inherited Attributes ####
-  data <- list() # create list object to store data
+  ABHVdata <- list() # create list object to store data
   
     # Read in data file 
-    data$raw <- read.csv("C:/Users/Kieri/Documents/ABHV/ABHV2018.csv",
+    ABHVdata$raw <- read.csv("ABHV2018.csv",
                          na.strings="\"\"", #with blanks/ N/As set to blank ("\"\"")
                          stringsAsFactors = TRUE) # categorical/character data as "factor"
-    data$raw$RatID <- as.factor(data$raw$RatID) # Convert RatID to factor type because it is not a numeric variable although it seems like one.
+    ABHVdata$raw$RatID <- as.factor(ABHVdata$raw$RatID) # Convert RatID to factor type because it is not a numeric variable although it seems like one.
       
     # Change to Contrast Sum Coding (sum-to-zero). 
       # This attribute will be inherited for all data frames subset from this one,
       # so it is a good idea to perform this step now, instead of many times later.
     
       # adjust Age to contrast coding
-      contrasts(data$raw$Age)=contr.sum(2)
-      contrasts(data$raw$Age)
+      contrasts(ABHVdata$raw$Age)=contr.sum(2)
+      contrasts(ABHVdata$raw$Age)
       # adjust Condition to contrast coding
-      contrasts(data$raw$Condition)=contr.sum(2)
-      contrasts(data$raw$Condition)
+      contrasts(ABHVdata$raw$Condition)=contr.sum(2)
+      contrasts(ABHVdata$raw$Condition)
       
         
   ## Subset Ethanol Data ####
       
     # With Controls
-    data$eth$ctrl <- subset(data$raw, Substance == "Ethanol")
+    ABHVdata$eth$ctrl <- subset(ABHVdata$raw, Substance == "Ethanol")
         # Rescale -- to avoid issues with eigen values later
-        data$eth$ctrl$recoded.conc <- car::recode(data$eth$ctrl$Concentration, "5 =.05; 20 =.20; 40 =.40")
+        ABHVdata$eth$ctrl$recoded.conc <- car::recode(ABHVdata$eth$ctrl$Concentration, "5 =.05; 20 =.20; 40 =.40")
       
     # No Controls
       # Subset rats that could drink ethanol from rats that never had the opportunity
-      data$eth$no.ctrl <- subset(data$eth$ctrl, Condition != "CTRL")
+      ABHVdata$eth$no.ctrl <- subset(ABHVdata$eth$ctrl, Condition != "CTRL")
     
-    # View your data frames in RStudio
-    #View(data$eth$ctrl)
-    #View(data$eth$no.ctrl)
+    # Uncomment the 2 lines below to view your data frames in RStudio
+    #View(ABHVdata$eth$ctrl)
+    #View(ABHVdata$eth$no.ctrl)
     
   ## Subset Sucrose Data ####
     # With Controls
-    data$suc$ctrl <- subset(data$raw, Substance == "Sucrose")
+    ABHVdata$suc$ctrl <- subset(ABHVdata$raw, Substance == "Sucrose")
       # Rescale -- to avoid issues with eigen values later
-      data$suc$ctrl$molarity <- car::recode(data$suc$ctrl$Concentration, ".34=.01; 3.4=.1; 34=1")
+      ABHVdata$suc$ctrl$molarity <- car::recode(ABHVdata$suc$ctrl$Concentration, ".34=.01; 3.4=.1; 34=1")
     
     # No Controls
       # Subset rats that could drink ethanol from rats that never had the opportunity
-    data$suc$no.ctrl <- subset(data$suc$ctrl, Condition != "CTRL")
+    ABHVdata$suc$no.ctrl <- subset(ABHVdata$suc$ctrl, Condition != "CTRL")
     
-    # View your data frames in RStudio
-    #View(data$suc$ctrl)
-    #View(data$suc$no.ctrl)
+    #Uncomment the 2 lines below to view your data frames in RStudio
+    #View(ABHVdata$suc$ctrl)
+    #View(ABHVdata$suc$no.ctrl)
   
   ## Subset Water Data ####
     # With Controls
-    data$h2o$ctrl <- subset(data$raw, Substance == "Water1" | Substance == "Water2")
+    ABHVdata$h2o$ctrl <- subset(ABHVdata$raw, Substance == "Water1" | Substance == "Water2")
       # Get rid of the 4 levels of Substance inherited from the original dataset
-      data$h2o$ctrl$Substance <- factor(data$h2o$ctrl$Substance)
-      data$h2o$ctrl$trial <- dplyr::recode(data$h2o$ctrl$Substance,
+      ABHVdata$h2o$ctrl$Substance <- factor(ABHVdata$h2o$ctrl$Substance)
+      # Recode this for clarity and easy use as a label in future graphs
+      ABHVdata$h2o$ctrl$trial <- dplyr::recode(ABHVdata$h2o$ctrl$Substance,
                                           "Water1" = "Trial 1",
                                           "Water2" = "Trial 2")
       # Adjust contrasts to sum-to-zero now that there are 2 factors
-      contrasts(data$h2o$ctrl$Substance)=contr.sum(2)
-      contrasts(data$h2o$ctrl$Substance)
+      contrasts(ABHVdata$h2o$ctrl$Substance)=contr.sum(2)
+      contrasts(ABHVdata$h2o$ctrl$Substance)
 
       
     # No Controls
       # Subset rats that could drink ethanol from rats that never had the opportunity
-    data$h2o$no.ctrl <- subset(data$h2o$ctrl, Condition != "CTRL")      
+    ABHVdata$h2o$no.ctrl <- subset(ABHVdata$h2o$ctrl, Condition != "CTRL")      
     
-    # View your data frames in RStudio
-    View(data$h2o$ctrl)
-    View(data$h2o$no.ctrl)
+    #Uncomment the 2 lines below to view your data frames in RStudio
+    #View(ABHVdata$h2o$ctrl)
+    #View(ABHVdata$h2o$no.ctrl)
 
     
   ## Mean Centering Variables ####
     
     # Ethanol
       # center Concentration to avoid issues with variance inflation factor (VIF) tolerances
-      data$eth$ctrl$c.conc <- data$eth$ctrl$recoded.conc - mean(data$eth$ctrl$recoded.conc)
+      ABHVdata$eth$ctrl$c.conc <- ABHVdata$eth$ctrl$recoded.conc - mean(ABHVdata$eth$ctrl$recoded.conc)
       # center TOTAL.ETOH.Swap.Consumed..g.kg.
-      data$eth$no.ctrl$c.totale <- data$eth$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg. - mean(data$eth$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg.)
+      ABHVdata$eth$no.ctrl$c.totale <- ABHVdata$eth$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg. - mean(ABHVdata$eth$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg.)
       # center Concentration 
-      data$eth$no.ctrl$c.conc <- data$eth$no.ctrl$recoded.conc - mean(data$eth$no.ctrl$recoded.conc)
+      ABHVdata$eth$no.ctrl$c.conc <- ABHVdata$eth$no.ctrl$recoded.conc - mean(ABHVdata$eth$no.ctrl$recoded.conc)
       
       # center MAC and ROC
-      data$eth$no.ctrl$c.MAC <- data$eth$no.ctrl$MAC - mean(data$eth$no.ctrl$MAC)
-      data$eth$no.ctrl$c.ROC <- data$eth$no.ctrl$ROC - mean(data$eth$no.ctrl$ROC)
-      data$eth$no.ctrl$c.MAC3 <- data$eth$no.ctrl$MAC3 - mean(data$eth$no.ctrl$MAC3)
-      data$eth$no.ctrl$c.ROC3 <- data$eth$no.ctrl$ROC3 - mean(data$eth$no.ctrl$ROC3)
+      ABHVdata$eth$no.ctrl$c.MAC <- ABHVdata$eth$no.ctrl$MAC - mean(ABHVdata$eth$no.ctrl$MAC)
+      ABHVdata$eth$no.ctrl$c.ROC <- ABHVdata$eth$no.ctrl$ROC - mean(ABHVdata$eth$no.ctrl$ROC)
+      ABHVdata$eth$no.ctrl$c.MAC3 <- ABHVdata$eth$no.ctrl$MAC3 - mean(ABHVdata$eth$no.ctrl$MAC3)
+      ABHVdata$eth$no.ctrl$c.ROC3 <- ABHVdata$eth$no.ctrl$ROC3 - mean(ABHVdata$eth$no.ctrl$ROC3)
     
     
     # Sucrose
       # Center molarity
-      data$suc$ctrl$c.molarity <- data$suc$ctrl$molarity - mean(data$suc$ctrl$molarity)
-      data$suc$no.ctrl$c.molarity <- data$suc$no.ctrl$molarity - mean(data$suc$no.ctrl$molarity)
+      ABHVdata$suc$ctrl$c.molarity <- ABHVdata$suc$ctrl$molarity - mean(ABHVdata$suc$ctrl$molarity)
+      ABHVdata$suc$no.ctrl$c.molarity <- ABHVdata$suc$no.ctrl$molarity - mean(ABHVdata$suc$no.ctrl$molarity)
       # center TOTAL.ETOH.Swap.Consumed..g.kg.
-      data$suc$no.ctrl$c.totale <- data$suc$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg. - mean(data$suc$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg.)
+      ABHVdata$suc$no.ctrl$c.totale <- ABHVdata$suc$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg. - mean(ABHVdata$suc$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg.)
     
     
     # Water
       # center TOTAL.ETOH.Swap.Consumed..g.kg.
-      data$h2o$no.ctrl$c.totale <- data$h2o$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg. - mean(data$h2o$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg.)
+      ABHVdata$h2o$no.ctrl$c.totale <- ABHVdata$h2o$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg. - mean(ABHVdata$h2o$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg.)
     
     # Save the workspace
     save.image("ABHV_workspace.RData")

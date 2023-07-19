@@ -8,7 +8,7 @@ cat("###########################################################################
   ## Sucrose Aversives GLMER (with EtOH vs CTRL)####
     models$suc$avers$overall <- glmer(Total.Aversive ~ c.molarity*Age*Condition 
                                       + (c.molarity|RatID),
-                                      data = data$suc$ctrl,
+                                      data = ABHVdata$suc$ctrl,
                                       family = poisson)
     # Model did not converge, used code below to extend # of iterations and start from where the previous model left off.
       ss <- getME(models$suc$avers$overall, c("theta", "fixef"))
@@ -43,7 +43,7 @@ cat("###########################################################################
   ## Sucrose Aversives GLMER (EtOH Group Only: Total EtOH Consumed) ####
     models$suc$avers$total.e <- glmer(Total.Aversive ~ c.molarity*Age*c.totale 
                                       + (c.molarity|RatID),
-                                      data = data$suc$no.ctrl,
+                                      data = ABHVdata$suc$no.ctrl,
                                       family = poisson)
  
     # Model did not converge, used code below to extend # of iterations and start from where the previous model left off.
@@ -90,7 +90,7 @@ cat("###########################################################################
   ## Sucrose Hedonics GLMER (with EtOH vs CTRL)####
     models$suc$hedon$overall <- glmer(Total.Hedonic...MM. ~ c.molarity*Age*Condition
                                       + (c.molarity|RatID),
-                                      data = data$suc$ctrl,
+                                      data = ABHVdata$suc$ctrl,
                                       family = poisson)
   
     summary(models$suc$hedon$overall)
@@ -135,7 +135,7 @@ cat("###########################################################################
   ## Sucrose Hedonics GLMER (EtOH Group Only: Total EtOH Consumed) ######
     models$suc$hedon$total.e <- glmer(Total.Hedonic...MM. ~ c.molarity*Age*c.totale 
                                       + (c.molarity|RatID),
-                                      data = data$suc$no.ctrl,
+                                      data = ABHVdata$suc$no.ctrl,
                                       family = poisson)
   
     summary(models$suc$hedon$total.e)

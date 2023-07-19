@@ -12,18 +12,17 @@ cat("###########################################################################
 ################################################################################\n")
 
   ## Ethanol Aversives GLMER (with EtOH vs CTRL)####
-    models$eth$avers$overall <- glmer(Total.Aversive ~ c.conc*Age*Condition 
-                                      + (c.conc|RatID),
-                                      data = data$eth$ctrl,
+    models$eth$avers$overall <- glmer(Total.Aversive ~ c.conc*Age*Condition # predictors: full factorial fixed effects of centered concentration, age, and condition
+                                      + (c.conc|RatID), # and the random effects of the intercept (RatID) and the slope of concentration
+                                      data = ABHVdata$eth$ctrl,
                                       family = poisson)
-  
+    # Get a summary of our output
     summary(models$eth$avers$overall)
  
     # Post Hocs & Planned Contrasts
-    # Checking to see if Adolescent vs Adult IAE rats were different as this is the only relevant comparison here
-      compars$eth$avers$overall <- list() # Create new comparison list for 'overall' model
+    # Checking to see which group (Adolescent vs Adult) had the higher mean and by how much 
       compars$eth$avers$overall$condition <- emmeans(models$eth$avers$overall, ~ Condition)
-      summary(compars$eth$avers$overall$condition, type = "response")
+      summary(compars$eth$avers$overall$condition, type = "response") # Gives the summary transformed back to the outcome varaible's units
 
       
     # Make and save residual distribution plot
@@ -50,7 +49,7 @@ cat("###########################################################################
   ## Ethanol Aversives GLMER (EtOH Group Only: Total EtOH Consumed) ####
     models$eth$avers$total.e <- glmer(Total.Aversive ~ c.conc*Age*c.totale 
                                       + (c.conc|RatID),
-                                      data = data$eth$no.ctrl,
+                                      data = ABHVdata$eth$no.ctrl,
                                       family = poisson)
  
     # Model did not converge, used code below to extend # of iterations and start from where the previous model left off.
@@ -98,7 +97,7 @@ cat("###########################################################################
                                   + c.conc:Age:c.MAC
                                   + c.conc:Age:c.ROC
                                   + (c.conc|RatID),
-                                  data = data$eth$no.ctrl, 
+                                  data = ABHVdata$eth$no.ctrl, 
                                   family = poisson)
 
     # Model did not converge, used code below to extend # of iterations and start from where the previous model left off.
@@ -146,7 +145,7 @@ cat("###########################################################################
                                   + c.conc:Age:c.MAC3
                                   + c.conc:Age:c.ROC3
                                   + (c.conc|RatID),
-                                  data = data$eth$no.ctrl,
+                                  data = ABHVdata$eth$no.ctrl,
                                   family = poisson)
  
     # Model did not converge, used code below to extend # of iterations and start from where the previous model left off.
@@ -190,7 +189,7 @@ cat("###########################################################################
   ## Ethanol Hedonics GLMER (with EtOH vs CTRL)####
     models$eth$hedon$overall <- glmer(Total.Hedonic...MM. ~ c.conc*Age*Condition
                                       + (c.conc|RatID),
-                                      data = data$eth$ctrl,
+                                      data = ABHVdata$eth$ctrl,
                                       family = poisson)
   
     summary(models$eth$hedon$overall)
@@ -235,7 +234,7 @@ cat("###########################################################################
   ## Ethanol Hedonics GLMER (EtOH Group Only: Total EtOH Consumed) ######
     models$eth$hedon$total.e <- glmer(Total.Hedonic...MM. ~ c.conc*Age*c.totale 
                                       + (c.conc|RatID),
-                                      data = data$eth$no.ctrl,
+                                      data = ABHVdata$eth$no.ctrl,
                                       family = poisson)
   
     summary(models$eth$hedon$total.e)
@@ -275,7 +274,7 @@ cat("###########################################################################
                                   + c.conc:Age:c.MAC
                                   + c.conc:Age:c.ROC
                                   + (c.conc|RatID),
-                                  data = data$eth$no.ctrl,
+                                  data = ABHVdata$eth$no.ctrl,
                                   family = poisson)
     
     summary(models$eth$hedon$MR1)
@@ -317,7 +316,7 @@ cat("###########################################################################
                                   + c.conc:Age:c.MAC3
                                   + c.conc:Age:c.ROC3
                                   + (c.conc|RatID),
-                                  data = data$eth$no.ctrl,
+                                  data = ABHVdata$eth$no.ctrl,
                                   family = poisson)
     
     summary(models$eth$hedon$MR3)
