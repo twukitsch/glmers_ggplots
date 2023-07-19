@@ -11,7 +11,7 @@ knitr::opts_chunk$set(echo = T,
                       error = F,
                       warning = F,
                       message = F,
-                      eval = F)
+                      eval = T)
 ```
 
 # BACKGROUND
@@ -110,7 +110,7 @@ Now that we understand our data and our modeling approach, we need to consider o
 4. Create Publication-Quality Nested Multi-panel Graphs with `ggplot2` & Organize Output objects
 
 
-# 1.1 Workspace Setup
+# 1. Workspace Setup
 
 ## Install and Load Required Packages
 
@@ -118,7 +118,7 @@ If you haven't already downloaded and installed Rtools, please install [`Rtools`
 
 The following code will check and remind you if you haven't yet installed Rtools. Then it will check to see if the package is already downloaded and installed. If so, it will load the package. If not, it will install the package from CRAN and then load the package once the installation is complete. You may be prompted to allow some of the downloads to take place so please remain at your device. I recommend making a separate R script like this for every project. As you add packages that you need, be sure to add them to your setup script and save time and guess work. 
 
-```{r load packages}
+```{r load packages, results = "hide"}
 # Load Packages ####
 
 # See if rtools is installed. It has necessary C++ compiler for installs of some of the libraries that are required.
@@ -237,13 +237,13 @@ if (Sys.which("make") == "") {  # Check to see if "make" command from rtools is 
 
 Using a working directory allows for relative referencing as opposed to absolute (aka static) referencing. Instead of changing every single absolute reference to a folder on one computer throughout all your code, you just need to change the working directory at the beginning and load/save from there. For example, say I want to reference the Experimental Structure.png from above. Instead of an absolute reference path like "C:/Users/name/Documents/ABHV/README_files/Experimental Structure.png", a relative reference path would be "README_files/Experimental Structure.png" Because our working directory is already set to the ABHV folder that contains the README_files folder, we dont need the extra fluff. This results in code that not only saves time because it is shorter, but is much more flexible for a variety of situations like using the code on another computer. Always try to use relative referencing once you have changed your working directory to make your life (and anyone's life that you share you code with) much easier.
 
-```{r Working Directory}
+```{r Working Directory, results = "hide"}
 # Set your working directory to your project folder and check that it is correct. 
-setwd("C:/Users/[yourname]/Documents/ABHV")
+setwd("C:/Users/kieri/Documents/ABHV")
 getwd()
 ```
 
-# 1.2 Workspace Overview
+## Workspace Overview
 
 To keep an organized and uncluttered workspace, I use sets of hierarchical lists to store related objects.
 We have the following object categories with most analyses:
@@ -255,7 +255,7 @@ We have the following object categories with most analyses:
 
 In this specific set of analyses we have a number of needs that determine the objects in each category.
 
-## Data Storage
+### Data Storage
 
 The full data requires various sub-setting to ensure the correct substances are being assessed independently. For example, we want to make sure that controls that never received access to ethanol are not included in an analysis or mean calculation when it would be inappropriate to do so. Thus, my data list object will look like this (with abbreviated names for easier calling in the code itself):
 
@@ -273,136 +273,136 @@ The full data requires various sub-setting to ensure the correct substances are 
 
 To do this we generate a list called `data` and begin populating it with subsets of the original data. In the process, it will be easier to make some changes now because subsets of data inherit certain attributes from their parent data sets. Therefore, during this step, we will also adjust the contrast coding and scale of some of our variables to help us avoid problems later. We adjust our categorical (factor) variables' contrast coding attribute because we want our `glmer` models' categorical variables to be coded like an ANOVA to ease interpretation of the effects. In other words, we want our model's intercept to be at the Grand Mean. This is just a personal preference of mine because I am used to it. This requires us to recode our categorical variables using sum-to-zero aka contrast coding instead of dummy coding or other types. Briefly, one group is assigned +1 and the other is assigned -1 and they sum to zero.
 
-```{r Data Subsetting}
+```{r Data Subsetting, results = "hide"}
 # Create our main data object
-data <- list()
+ABHVdata <- list()
 
     # Read in data file 
-    data$raw <- read.csv("ABHV2018.csv",
+    ABHVdata$raw <- read.csv("ABHV2018.csv",
                          na.strings="\"\"", #with blanks/ N/As set to blank ("\"\"")
                          stringsAsFactors = TRUE) # categorical/character data as "factor"
-    data$raw$RatID <- as.factor(data$raw$RatID) # Convert RatID to factor type because it is not a numeric variable although it seems like one.
+    ABHVdata$raw$RatID <- as.factor(ABHVdata$raw$RatID) # Convert RatID to factor type because it is not a numeric variable although it seems like one.
       
     # Change to Contrast Sum Coding (sum-to-zero). 
       # This attribute will be inherited for all data frames subset from this one,
       # so it is a good idea to perform this step now, instead of many times later.
     
       # adjust Age to contrast coding
-      contrasts(data$raw$Age)=contr.sum(2)
-      contrasts(data$raw$Age)
+      contrasts(ABHVdata$raw$Age)=contr.sum(2)
+      contrasts(ABHVdata$raw$Age)
       # adjust Condition to contrast coding
-      contrasts(data$raw$Condition)=contr.sum(2)
-      contrasts(data$raw$Condition)
+      contrasts(ABHVdata$raw$Condition)=contr.sum(2)
+      contrasts(ABHVdata$raw$Condition)
       
         
   ## Subset Ethanol Data ####
       
     # With Controls
-    data$eth$ctrl <- subset(data$raw, Substance == "Ethanol")
+    ABHVdata$eth$ctrl <- subset(ABHVdata$raw, Substance == "Ethanol")
         # Rescale to avoid issues with eigen values later
-        data$eth$ctrl$recoded.conc <- car::recode(data$eth$ctrl$Concentration, "5 =.05; 20 =.20; 40 =.40")
+        ABHVdata$eth$ctrl$recoded.conc <- car::recode(ABHVdata$eth$ctrl$Concentration, "5 =.05; 20 =.20; 40 =.40")
       
     # No Controls
       # Subset rats that could drink ethanol from rats that never had the opportunity
-      data$eth$no.ctrl <- subset(data$eth$ctrl, Condition != "CTRL")
+      ABHVdata$eth$no.ctrl <- subset(ABHVdata$eth$ctrl, Condition != "CTRL")
     
     # Uncomment the 2 lines below to view your data frames in RStudio
-    #View(data$eth$ctrl)
-    #View(data$eth$no.ctrl)
+    #View(ABHVdata$eth$ctrl)
+    #View(ABHVdata$eth$no.ctrl)
     
   ## Subset Sucrose Data ####
     # With Controls
-    data$suc$ctrl <- subset(data$raw, Substance == "Sucrose")
+    ABHVdata$suc$ctrl <- subset(ABHVdata$raw, Substance == "Sucrose")
       # Rescale -- to avoid issues with eigen values later
-      data$suc$ctrl$molarity <- car::recode(data$suc$ctrl$Concentration, ".34=.01; 3.4=.1; 34=1")
+      ABHVdata$suc$ctrl$molarity <- car::recode(ABHVdata$suc$ctrl$Concentration, ".34=.01; 3.4=.1; 34=1")
     
     # No Controls
       # Subset rats that could drink ethanol from rats that never had the opportunity
-    data$suc$no.ctrl <- subset(data$suc$ctrl, Condition != "CTRL")
+    ABHVdata$suc$no.ctrl <- subset(ABHVdata$suc$ctrl, Condition != "CTRL")
     
     #Uncomment the 2 lines below to view your data frames in RStudio
-    #View(data$suc$ctrl)
-    #View(data$suc$no.ctrl)
+    #View(ABHVdata$suc$ctrl)
+    #View(ABHVdata$suc$no.ctrl)
   
   ## Subset Water Data ####
     # With Controls
-    data$h2o$ctrl <- subset(data$raw, Substance == "Water1" | Substance == "Water2")
+    ABHVdata$h2o$ctrl <- subset(ABHVdata$raw, Substance == "Water1" | Substance == "Water2")
       # Get rid of the 4 levels of Substance inherited from the original dataset
-      data$h2o$ctrl$Substance <- factor(data$h2o$ctrl$Substance)
+      ABHVdata$h2o$ctrl$Substance <- factor(ABHVdata$h2o$ctrl$Substance)
       # Recode this for clarity and easy use as a label in future graphs
-      data$h2o$ctrl$trial <- dplyr::recode(data$h2o$ctrl$Substance,
+      ABHVdata$h2o$ctrl$trial <- dplyr::recode(ABHVdata$h2o$ctrl$Substance,
                                           "Water1" = "Trial 1",
                                           "Water2" = "Trial 2")
       # Adjust contrasts to sum-to-zero now that there are 2 factors
-      contrasts(data$h2o$ctrl$Substance)=contr.sum(2)
-      contrasts(data$h2o$ctrl$Substance)
+      contrasts(ABHVdata$h2o$ctrl$Substance)=contr.sum(2)
+      contrasts(ABHVdata$h2o$ctrl$Substance)
 
       
     # No Controls
       # Subset rats that could drink ethanol from rats that never had the opportunity
-    data$h2o$no.ctrl <- subset(data$h2o$ctrl, Condition != "CTRL")      
+    ABHVdata$h2o$no.ctrl <- subset(ABHVdata$h2o$ctrl, Condition != "CTRL")      
     
     #Uncomment the 2 lines below to view your data frames in RStudio
-    #View(data$h2o$ctrl)
-    #View(data$h2o$no.ctrl)
+    #View(ABHVdata$h2o$ctrl)
+    #View(ABHVdata$h2o$no.ctrl)
 ```
 
 Now we have our data list object with the following hierarchical structure:
 
-* `data`
-  * `data$raw`
-  * `data$eth`
-    * `data$eth$ctrl`
-    * `data$eth$no.ctrl`
-  * `data$suc`
-    * `data$suc$ctrl`
-    * `data$suc$no.ctrl`
-  * `data$h2o`
-    * `data$h2o$ctrl`
-    * `data$h2o$no.ctrl`
+* `ABHVdata`
+  * `ABHVdata$raw`
+  * `ABHVdata$eth`
+    * `ABHVdata$eth$ctrl`
+    * `ABHVdata$eth$no.ctrl`
+  * `ABHVdata$suc`
+    * `ABHVdata$suc$ctrl`
+    * `ABHVdata$suc$no.ctrl`
+  * `ABHVdata$h2o`
+    * `ABHVdata$h2o$ctrl`
+    * `ABHVdata$h2o$no.ctrl`
 
 And we have also performed our coding adjustments. However, we still need to further prepare our data to avoid issues during analysis such as problems with variance inflation. If we mean-center the continuous variables that will be predictors in an `lmer` or `glmer` model, the variance inflation factor tends to remain within a tolerable range and shouldn't affect results. Thus we mean-center the variables we need to below and save our workspace, so we can come back to this point later if we mess something up.
 
-```{r Centering Variables}
+```{r Centering Variables, results = "hide"}
   ## Mean Centering Variables ####
     
     # Ethanol
       # center Concentration to avoid issues with variance inflation factor (VIF) tolerances
-      data$eth$ctrl$c.conc <- data$eth$ctrl$recoded.conc - mean(data$eth$ctrl$recoded.conc)
+      ABHVdata$eth$ctrl$c.conc <- ABHVdata$eth$ctrl$recoded.conc - mean(ABHVdata$eth$ctrl$recoded.conc)
       # center TOTAL.ETOH.Swap.Consumed..g.kg.
-      data$eth$no.ctrl$c.totale <- data$eth$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg. - mean(data$eth$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg.)
+      ABHVdata$eth$no.ctrl$c.totale <- ABHVdata$eth$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg. - mean(ABHVdata$eth$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg.)
       # center Concentration 
-      data$eth$no.ctrl$c.conc <- data$eth$no.ctrl$recoded.conc - mean(data$eth$no.ctrl$recoded.conc)
+      ABHVdata$eth$no.ctrl$c.conc <- ABHVdata$eth$no.ctrl$recoded.conc - mean(ABHVdata$eth$no.ctrl$recoded.conc)
       
       # center MAC and ROC
-      data$eth$no.ctrl$c.MAC <- data$eth$no.ctrl$MAC - mean(data$eth$no.ctrl$MAC)
-      data$eth$no.ctrl$c.ROC <- data$eth$no.ctrl$ROC - mean(data$eth$no.ctrl$ROC)
-      data$eth$no.ctrl$c.MAC3 <- data$eth$no.ctrl$MAC3 - mean(data$eth$no.ctrl$MAC3)
-      data$eth$no.ctrl$c.ROC3 <- data$eth$no.ctrl$ROC3 - mean(data$eth$no.ctrl$ROC3)
+      ABHVdata$eth$no.ctrl$c.MAC <- ABHVdata$eth$no.ctrl$MAC - mean(ABHVdata$eth$no.ctrl$MAC)
+      ABHVdata$eth$no.ctrl$c.ROC <- ABHVdata$eth$no.ctrl$ROC - mean(ABHVdata$eth$no.ctrl$ROC)
+      ABHVdata$eth$no.ctrl$c.MAC3 <- ABHVdata$eth$no.ctrl$MAC3 - mean(ABHVdata$eth$no.ctrl$MAC3)
+      ABHVdata$eth$no.ctrl$c.ROC3 <- ABHVdata$eth$no.ctrl$ROC3 - mean(ABHVdata$eth$no.ctrl$ROC3)
     
     
     # Sucrose
       # Center molarity
-      data$suc$ctrl$c.molarity <- data$suc$ctrl$molarity - mean(data$suc$ctrl$molarity)
-      data$suc$no.ctrl$c.molarity <- data$suc$no.ctrl$molarity - mean(data$suc$no.ctrl$molarity)
+      ABHVdata$suc$ctrl$c.molarity <- ABHVdata$suc$ctrl$molarity - mean(ABHVdata$suc$ctrl$molarity)
+      ABHVdata$suc$no.ctrl$c.molarity <- ABHVdata$suc$no.ctrl$molarity - mean(ABHVdata$suc$no.ctrl$molarity)
       # center TOTAL.ETOH.Swap.Consumed..g.kg.
-      data$suc$no.ctrl$c.totale <- data$suc$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg. - mean(data$suc$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg.)
+      ABHVdata$suc$no.ctrl$c.totale <- ABHVdata$suc$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg. - mean(ABHVdata$suc$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg.)
     
     
     # Water
       # center TOTAL.ETOH.Swap.Consumed..g.kg.
-      data$h2o$no.ctrl$c.totale <- data$h2o$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg. - mean(data$h2o$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg.)
+      ABHVdata$h2o$no.ctrl$c.totale <- ABHVdata$h2o$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg. - mean(ABHVdata$h2o$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg.)
     
     # Save the workspace
     save.image("ABHV_workspace.RData")
 
 ```
 
-## Model and Comparison Storage
+### Model and Comparison Storage
 
-### Model Data
+**Model Data**
 
-To accommodate and store each list object returned by our models, we need another hierarchical list object (`models`) with a similar structure to the data above. However, there is more nuance because we are performing analyses for hedonic and aversive responses and, for each of those, we have analyses that involve different variables (Overall Model, Total Ethanol, MR, and MR3). So we will need a slightly different list structure that accommodates each formula we discussed in the background above. And, since we are comparing models based on their ability to predict reactions to the substance of most interest to us (Ethanol), we will have less analyses for Sucrose and Water. In the end it should look something like this:
+To accommodate and store each list object returned by our models, we need another hierarchical list object (`models`) with a similar structure to the data above. However, there is more nuance because we are performing analyses for hedonic and aversive responses and, for each of those, we have analyses that involve different variables (Overall Model, Total Ethanol, MR, and MR3). So we will need a slightly different list structure that accommodates each formula we discussed in the background section above. And, since we are comparing models based on their ability to predict reactions to the substance of most interest to us (Ethanol), we will have less analyses for Sucrose and Water. In the end it should look something like this:
 
 + Models
   + Ethanol
@@ -431,9 +431,9 @@ To accommodate and store each list object returned by our models, we need anothe
       + Overall
       + Total Ethanol
       
-### Comparison Data
+**Comparison Data**
 
-Our comparison data will look a bit different. The overall structure of our comparison list object (`compars`) will be the same as the models; however, we won't need to make comparisons for variables that aren't significant. Therefore, we will just have objects in `compars` based on the analysis they came from and the name of the fixed effect/interaction they are from. For example the structure might look something like:
+Our comparison data will look a bit different. The overall structure of our comparison list object (`compars`) will be the same as the models; however, we won't need to make comparisons for variables that aren't significant. Therefore, we will just have objects in `compars` based on the analysis they came from and the name of the fixed effect/interaction they are from. For example, the structure might look something like:
 
 + Comparisons
   + Ethanol
@@ -446,7 +446,7 @@ Our comparison data will look a bit different. The overall structure of our comp
 
 We will discuss the organization of `plots` and related variables when we reach that portion so it makes more sense. But we will need our `models` and `compars` lists for the next steps, so lets make those now.
 
-```{r Model and Planned Comparison Lists}
+```{r Model and Planned Comparison Lists, results = "hide"}
 # List setup ####
 
 ## Models ####
@@ -457,9 +457,9 @@ compars <- list()
 
 ```
 
-# 2.1 Modeling
+# 2. & 3. Modeling & Comparisons
 
-To quickly recap: This is count data that has some missing data due to attrition and it has a continuous predictor variable that represents our repeated measure (Concentration) since each animal reacted to each concentration of each substance. Therefore a Poisson Generalized Linear Mixed Effects Regression (glmer with a Poisson link function) is appropriate for analysis because it can handle these issues/needs much better than a lot of other models. As discussed before, there is some nesting in the structure of the data and, for reasons related to understanding for the audience the publication, we opted to do two separate analyses on this data set instead of properly nesting it. We will use ethanol as an illustrative example because it also has two models that I wanted to compare.
+To quickly recap: This is count data that has some missing data due to attrition. It also has a continuous predictor variable that represents our repeated measure (Concentration) since each animal reacted to each concentration of each substance. Therefore, a Poisson Generalized Linear Mixed Effects Regression (glmer with a Poisson link function) is appropriate for analysis because it can handle these issues/needs much better than a lot of other models. As discussed before, there is some nesting in the structure of the data. For the audience of the publication, we opted to do two separate analyses on this data set instead of properly nesting it. We are using ethanol as an illustrative example because it also has two models that I wanted to compare and they demonstrate different `glmer` formula configurations well.
 
 For convenience, I will restate our variables:
 
@@ -483,17 +483,19 @@ For convenience, I will restate our variables:
   + 20%
   + 40%
 
-Now that we have our variables and out storage objects ready to go, we can begin running our models. Remember that our continuous variables will be centered variables (e.g. `c.conc` for Concentration)
+Now that we have our variables and our storage objects ready to go, we can begin running our models. Remember that our continuous variables will be centered variables (e.g. `c.conc` for Concentration)
 
 ## Ethanol Aversive Responses
 
-```{r Aversive Responses: Overall Model, echo = TRUE, message = TRUE, warning = TRUE, eval = TRUE}
+### Overall Model
+
+```{r Aversive Responses: Overall Model}
 # Ethanol vs Control (Overall)
-library(lme4)
+
   ## Ethanol Aversives GLMER (with EtOH vs CTRL)####
-    models$eth$avers$overall <- lme4::glmer(Total.Aversive ~ c.conc*Age*Condition # predictors: full factorial fixed effects of centered concentration, age, and condition
+    models$eth$avers$overall <- glmer(Total.Aversive ~ c.conc*Age*Condition # predictors: full factorial fixed effects of centered concentration, age, and condition
                                       + (c.conc|RatID), # and the random effects of the intercept (RatID) and the slope of concentration
-                                      data = data$eth$ctrl,
+                                      data = ABHVdata$eth$ctrl,
                                       family = poisson)
     # Get a summary of our output
     summary(models$eth$avers$overall)
@@ -501,33 +503,30 @@ library(lme4)
 
 Now we need to check to see if our assumption of normally distributed residuals is correct using a simple plot.
 
-```{r Aversive Responses: Overall Model Residual Normality Check, echo = FALSE}
-    # Make and save residual distribution plot
-      # make PNG file
-      png("Eavers Residual Probability Density.png", width = 300, height = 300)
-      # plot residual density function
-      plot(density(residuals(models$eth$avers$overall)), 
-           main = "",
-           xlab = "", 
-           frame = FALSE)
-      # Add normal distribution to the residual plot for comparison to check assumption of normality
-      MEAN = mean(residuals(models$eth$avers$overall))
-      STDEV = sqrt(var(residuals(models$eth$avers$overall)))
-      curve(dnorm(x, mean = MEAN, sd = STDEV),
-            col = "darkblue",
-            lwd = 2,
-            add = TRUE,
-            yaxt = "n")
-      remove(MEAN, STDEV) # Clean workspace
-      # close the file
-      dev.off()
+```{r Aversive Responses: Overall Model Residual Normality Check, echo = TRUE}
+    # plot residual density function
+    plot(density(residuals(models$eth$avers$overall)), 
+         main = "",
+         xlab = "", 
+         frame = FALSE)
+    # Add normal distribution to the residual plot for comparison to check assumption of normality
+    MEAN = mean(residuals(models$eth$avers$overall))
+    STDEV = sqrt(var(residuals(models$eth$avers$overall)))
+    curve(dnorm(x, mean = MEAN, sd = STDEV),
+          col = "darkblue",
+          lwd = 2,
+          add = TRUE,
+          yaxt = "n") # Generate normal curve
+    remove(MEAN, STDEV) # Clean workspace
+
 ```
 
-The blue line is a normal distribution. The black line is our residual distribution. From the graph we can see the residuals are slighly kurtotic (pointier and a bit thinner than a normal curve) but mostly normal. I would say that the assumption of normality has been met. Now, on to interpretation. I have my summary from before, but I need to compare my significant variables. `emmeans` is a convenient package for this. I can look at the means from the model and compare my two levels of my Condition variable to see which direction the difference is in and how large the difference between means is. 
+The blue line is a normal distribution. The black line is our residual distribution. From the graph we can see the residuals are slighly kurtotic (pointier and a bit thinner than a normal curve), but mostly normal. I would say that the assumption of normality has been met. 
+
+Now, on to interpretation. We have our summary from before, but we need to compare our significant variables. `emmeans` is a convenient package for this. I can look at the means from the model and compare my two levels of my Condition variable to see which direction the difference is in and how large the difference between means is. When your categorical variables have 3 or more levels, *post hoc* comparisons that control for familywise error rate are available using the `pairs()` function from the `emmeans` library.
 
 ```{r Aversive Responses: Overall Model Planned Comparisons}
   # Compare significant variables
-  compars$eth$avers$overall <- list() # Create new comparison list for overall model
   compars$eth$avers$overall$condition <- emmeans(models$eth$avers$overall, ~ Condition) # Perform comparison of Condition with emmeans
   
   # We dont need a comparison from c.conc because we have a direction AND a magnitude on a continuous variable! WOO!
@@ -539,73 +538,92 @@ The blue line is a normal distribution. The black line is our residual distribut
 
 ```
 
-I document these numbers, save my workspace and then move on to the next model.
+We document these numbers, save our workspace and then move on to the next model.
 
-```{r Aversive Responses: Total Ethanol}
+### Total Ethanol Consumed
 
-# Ethanol Group Only: Total Ethanol Consumed (total.e)
+Next we run our Total Ethanol Consumed model. However, this model will have some problems with convergence, so we will need to update from where the model left off and use the optimizer controls to extend the number of iterations the model uses to find convergence.
+
+```{r Aversive Responses: Total Ethanol, warning = T, error = T, message = T}
+# predictors: full factorial fixed effects of centered concentration, age, and total ethanol consumed during drinking phase of study
+models$eth$avers$total.e <- glmer(Total.Aversive ~ c.conc*Age*c.totale 
+                                  + (c.conc|RatID), # and the random effects of the intercept (RatID) and the slope of concentration
+                                  data = ABHVdata$eth$no.ctrl,
+                                  family = poisson)
+```
   
-  # predictors: full factorial fixed effects of centered concentration, age, and total ethanol consumed during drinking phase of study
-  models$eth$avers$total.e <- glmer(Total.Aversive ~ c.conc*Age*c.totale 
-                                    + (c.conc|RatID), # and the random effects of the intercept (RatID) and the slope of concentration
-                                    data=data$eth$no.ctrl,
-                                    family=poisson)
-
+```{r Extend Model Iterations}  
   # Model did not converge. Grab Theta and fixed effects data from model and put into temporary object
-  ss <- getME(models$eth$avers$total.e,c("theta","fixef"))
+  ss <- getME(models$eth$avers$total.e,c("theta", "fixef"))
   # Extend the number of iterations with optimizer and update model
-  models$eth$avers$total.e <- update(models$eth$avers$total.e,start=ss,control=glmerControl(optCtrl=list(maxfun=2e6))) 
-  
+  models$eth$avers$total.e <- update(models$eth$avers$total.e,
+                                     start = ss,
+                                     control = glmerControl(optCtrl = list(maxfun = 2e6))) 
+```
+```{r Get Model Summary}
   # Model converged, get summary of output
   summary(models$eth$avers$total.e)
-  # Remove temporary object to declutter workspace
-  remove(ss)
+  
+  remove(ss) # Remove temporary object to declutter workspace
 ```
 
-Again, before I begin interpreting, I need to check to see if our assumption of normally distributed residuals is correct using a plot of probability density.
+Again, before we begin interpreting, we need to check to see if our assumption of normally distributed residuals is correct using a plot of probability density.
 
 ```{r Aversive Responses: Total Ethanol Residual Normality Check, echo = FALSE}
-# Start by plotting a density function of our model's residuals
-plot(density(residuals(models$eth$avers$total.e)), 
-     main="", xlab="", frame= FALSE)
-# Add normal distribution to the residual plot for comparison to check assumption of normality
-MEAN = mean(residuals(models$eth$avers$total.e)) # get the residual mean
-STDEV = sqrt(var(residuals(models$eth$avers$total.e))) # get the st dev
-curve(dnorm(x, mean=MEAN, sd=STDEV), col="darkblue", lwd=2, add=TRUE, yaxt="n") # Generate normal curve
-remove(MEAN,STDEV)
+    # plot residual density function
+    plot(density(residuals(models$eth$avers$total.e)), 
+         main = "",
+         xlab = "", 
+         frame = FALSE) 
+    # Add normal distribution to the residual plot for comparison to check assumption of normality
+    MEAN = mean(residuals(models$eth$avers$total.e))
+    STDEV = sqrt(var(residuals(models$eth$avers$total.e)))
+    curve(dnorm(x, mean = MEAN, sd = STDEV),
+          col = "darkblue",
+          lwd = 2,
+          add = TRUE,
+          yaxt = "n") # Generate normal curve
+    remove(MEAN, STDEV) # Clean workspace
 ```
 
-Again, the blue line is a normal distribution. The black line is our residual distribution. From the graph we can see the residuals are, again, slightly kurtotic but mostly normal. I would say that the assumption of normality has been met her as well. Now, on to interpretation. I need to look at the means from the model and compare my two levels of my Condition variable to see which direction and how large the difference is.
+Again, the blue line is a normal distribution. The black line is our residual distribution. From the graph we can see the residuals are, again, slightly kurtotic but mostly normal. I would say that the assumption of normality has been met here as well. 
+
+On to interpretation. We need to look at the means from the model and compare the two levels of our Age variable to see which direction and how large the difference is. Copy down the data we need, save, rinse, and repeat...
 
 ```{r Aversive Responses: Total Ethanol Planned Comparisons}
     # Compare significant variables
     compars$eth$avers$total.e <- list() # Create new comparison list for total.e model
-    compars$eth$avers$total.e$age<- emmeans(models$eth$avers$total.e, ~ Age) # Perform comparison of Condition with emmeans
+    compars$eth$avers$total.e$age <- emmeans(models$eth$avers$total.e, ~ Age) # Perform comparison of Condition with emmeans
     summary(compars$eth$avers$total.e$age, type = "response") # get summary in the numerical space of the original variable not the log/Poisson space
     
-      #Save Workspace
+  #Save Workspace
   save.image("ABHV_workspace.RData")
 ```
 
-Copy down the data you need, save, rinse, and repeat...
+### MAC & RoC (MR1)
     
-```{r Aversive Responses: MAC and RoC (MR1)}
+```{r Aversive Responses: MAC and RoC (MR1), warning = T, error = T, message = T}
   # predictors: note that these are not the full factorial fixed effects. I'm not interested in the higher level interactions here.
-models$eth$avers$MR1 <-glmer(Total.Aversive ~ c.conc+Age+c.MAC+c.ROC
-                 + c.conc:Age
-                 + c.conc:c.MAC
-                 + c.conc:c.ROC
-                 + Age:c.MAC
-                 + Age:c.ROC
-                 + c.conc:Age:c.MAC
-                 + c.conc:Age:c.ROC
-                 + (c.conc|RatID), data=data$eth$no.ctrl, family=poisson)
+models$eth$avers$MR1 <- glmer(Total.Aversive ~ c.conc+Age+c.MAC+c.ROC
+                              + c.conc:Age
+                              + c.conc:c.MAC
+                              + c.conc:c.ROC
+                              + Age:c.MAC
+                              + Age:c.ROC
+                              + c.conc:Age:c.MAC
+                              + c.conc:Age:c.ROC
+                              + (c.conc|RatID),
+                              data = ABHVdata$eth$no.ctrl, 
+                              family = poisson)
 
 # Model did not converge, used code below to extend # of iterations and start from where the previous model left off.
 ss <- getME(models$eth$avers$MR1,c("theta","fixef"))
-models$eth$avers$MR1 <- update(models$eth$avers$MR1,start=ss,control=glmerControl(optCtrl=list(maxfun=2e6)))
+models$eth$avers$MR1 <- update(models$eth$avers$MR1,
+                               start = ss,
+                               control = glmerControl(optCtrl = list(maxfun = 2e6)))
+
 summary(models$eth$avers$MR1)
-remove(ss)
+remove(ss) # Clean workspace
 
 # Check variance inflation factor (VIF)
 vif(models$eth$avers$MR1)
@@ -615,16 +633,24 @@ AIC(models$eth$avers$MR1, models$eth$avers$total.e)
 BIC(models$eth$avers$MR1, models$eth$avers$total.e)
 
 ```
+
 Again, check normality of residuals
+
 ```{r Aversive Responses: MAC and RoC (MR1) Residual Normality Check, echo = FALSE}
-# Start by plotting a density function of model's residuals
-plot(density(residuals(models$eth$avers$MR1)), 
-     main="", xlab="", frame= FALSE)
-# Add normal distribution to the residual plot for comparison to check assumption of normality
-MEAN = mean(residuals(models$eth$avers$MR1)) # get the residual mean
-STDEV = sqrt(var(residuals(models$eth$avers$MR1))) # get the st dev
-curve(dnorm(x, mean=MEAN, sd=STDEV), col="darkblue", lwd=2, add=TRUE, yaxt="n") # Generate normal curve
-remove(MEAN,STDEV)
+    # Start by plotting a density function of model's residuals
+    plot(density(residuals(models$eth$avers$MR1)), 
+         main = "", 
+         xlab = "", 
+         frame = FALSE)
+     # Add normal distribution to the residual plot for comparison to check assumption of normality
+     MEAN = mean(residuals(models$eth$avers$MR1)) # get the residual mean
+     STDEV = sqrt(var(residuals(models$eth$avers$MR1))) # get the st dev
+     curve(dnorm(x, mean = MEAN, sd = STDEV),
+           col = "darkblue",
+           lwd = 2,
+           add = TRUE,
+           yaxt = "n") # Generate normal curve
+     remove(MEAN, STDEV) # Clean workspace
 
 #Save Workspace
 save.image("ABHV_workspace.RData")
@@ -632,106 +658,68 @@ save.image("ABHV_workspace.RData")
 
 Similar to previous residuals. No planned comparisons here. This model was not selected for interpretation (considerably higher BIC), so I didn't perform any. Then we repeat for the 4th model which excludes the first day of drinking from calculations of MAC and RoC.
 
+### MAC3 and RoC3 (MR3)
+
 ```{r Aversive Responses: MAC and RoC (MR3)}
   # predictors: note that these are not the full factorial fixed effects. I'm not interested in the higher level interactions here.
-models$eth$avers$MR3 <-glmer(Total.Aversive ~ c.conc+Age+c.MAC3+c.ROC3
-                 + c.conc:Age
-                 + c.conc:c.MAC3
-                 + c.conc:c.ROC3
-                 + Age:c.MAC3
-                 + Age:c.ROC3
-                 + c.conc:Age:c.MAC3
-                 + c.conc:Age:c.ROC3
-                 + (c.conc|RatID), data=data$eth$no.ctrl, family=poisson)
+models$eth$avers$MR3 <- glmer(Total.Aversive ~ c.conc+Age+c.MAC3+c.ROC3
+                              + c.conc:Age
+                              + c.conc:c.MAC3
+                              + c.conc:c.ROC3
+                              + Age:c.MAC3
+                              + Age:c.ROC3
+                              + c.conc:Age:c.MAC3
+                              + c.conc:Age:c.ROC3
+                              + (c.conc|RatID),
+                              data = ABHVdata$eth$no.ctrl,
+                              family = poisson)
 
 # Model did not converge, used code below to extend # of iterations and start from where the previous model left off.
-ss <- getME(models$eth$avers$MR3, c("theta","fixef"))
-models$eth$avers$MR3 <- update(models$eth$avers$MR3,start=ss,control=glmerControl(optCtrl=list(maxfun=2e9)))
-remove(ss)
+  ss <- getME(models$eth$avers$MR3, c("theta","fixef"))
+  models$eth$avers$MR3 <- update(models$eth$avers$MR3,
+                                 start = ss,
+                                 control = glmerControl(optCtrl = list(maxfun = 2e9)))
+  remove(ss) # Clean workspace
+
 summary(models$eth$avers$MR3)
 
-vif(models$eth$avers$MR3)
-AIC(models$eth$avers$MR3, models$eth$avers$MR1, models$eth$avers$total.e)
-BIC(models$eth$avers$MR3, models$eth$avers$MR1, models$eth$avers$total.e)
+# Variance inflation check & model comparison
+  vif(models$eth$avers$MR3)
+  AIC(models$eth$avers$MR3, models$eth$avers$MR1, models$eth$avers$total.e)
+  BIC(models$eth$avers$MR3, models$eth$avers$MR1, models$eth$avers$total.e)
 ```
+
+It looks like our Total Ethanol Consumed model is still doing the best in terms of BIC so we will use it for the remaining substances instead of MR1 or MR3.
 
 Again, check normality of residuals
 
 ```{r Aversive Responses: MAC and RoC (MR3) Residual Normality Check, echo = FALSE}
-# Start by plotting a density function of model's residuals
-plot(density(residuals(models$eth$avers$MR3)), 
-     main="", xlab="", frame= FALSE)
-# Add normal distribution to the residual plot for comparison to check assumption of normality
-MEAN = mean(residuals(models$eth$avers$MR3)) # get the residual mean
-STDEV = sqrt(var(residuals(models$eth$avers$MR3))) # get the st dev
-curve(dnorm(x, mean=MEAN, sd=STDEV), col="darkblue", lwd=2, add=TRUE, yaxt="n") # Generate normal curve
-remove(MEAN,STDEV)
+    # Start by plotting a density function of model's residuals
+    plot(density(residuals(models$eth$avers$MR3)), 
+        main = "",
+        xlab = "",
+        frame = FALSE)
+    # Add normal distribution to the residual plot for comparison to check assumption of normality
+    MEAN = mean(residuals(models$eth$avers$MR3)) # get the residual mean
+    STDEV = sqrt(var(residuals(models$eth$avers$MR3))) # get the st dev
+    curve(dnorm(x, mean = MEAN, sd = STDEV),
+          col = "darkblue",
+          lwd = 2,
+          add = TRUE,
+          yaxt = "n") # Generate normal curve
+    remove(MEAN, STDEV) # Clean workspace
 
 #Save Workspace
 save.image("ABHV_workspace.RData")
 ```
 
-And again, things look pretty normal. This one also has no planned comparisons and was not selected for the same reason as the previous. The remaining model runs are not shown here for brevity.
+And again, things look pretty normal. The remaining Sucrose and Water model runs are not shown here for brevity.
 
-# Plotting/Graphing GLMERs with ggplot2
+# 4. Plotting/Graphing GLMERs with ggplot2
+
+
 
 ```{r }
 
 ```
 
-
-In the end, our specific lists of objects with abbreviations looks like this:
-
-* data
-  * raw
-  * ethanol
-    * with controls
-    * no controls
-  * sucrose
-    * with controls
-    * no controls
-  * water
-    * with controls
-    * no controls
-* models
-  * ethanol
-    * aversive
-      * overall
-      * total ethanol
-      * MR (Mean Alcohol Consumed & Rate of Change)
-      * MR3 (Mean Alcohol Consumed & Rate of Change excluding day 3)
-    * hedonic
-      * overall
-      * total ethanol
-      * MR (Mean Alcohol Consumed & Rate of Change)
-      * MR3 (Mean Alcohol Consumed & Rate of Change excluding day 3)
-  * sucrose
-    * aversive
-      * overall
-      * total ethanol
-      * MR (Mean Alcohol Consumed & Rate of Change)
-    * hedonic
-      * overall
-      * total ethanol
-      * MR (Mean Alcohol Consumed & Rate of Change)
-  * water
-    * aversive
-      * overall
-      * total ethanol
-      * MR (Mean Alcohol Consumed & Rate of Change)
-    * hedonic
-      * overall
-      * total ethanol
-      * MR (Mean Alcohol Consumed & Rate of Change)
-* comparisons
-* plots
-
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
