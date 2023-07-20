@@ -184,7 +184,7 @@
       ylab("Aversive Responses (+/-SEM)")+
       ggtitle("Ethanol % (v/v)")
     
-    plots$eth$hedon$combo.ggp
+    plots$eth$avers$combo.ggp
     
     # Save the plot
     ggsave("Fig 8B Ethanol Aversive Total Ethanol Graph.png", 

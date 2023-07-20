@@ -73,7 +73,7 @@ cat("###########################################################################
       plot(density(residuals(models$eth$avers$total.e)), 
            main = "",
            xlab = "", 
-           frame = FALSE)
+           frame = FALSE) 
       # Add normal distribution to the residual plot for comparison to check assumption of normality
       MEAN = mean(residuals(models$eth$avers$total.e))
       STDEV = sqrt(var(residuals(models$eth$avers$total.e)))
@@ -81,7 +81,7 @@ cat("###########################################################################
             col = "darkblue",
             lwd = 2,
             add = TRUE,
-            yaxt = "n")
+            yaxt = "n") # Generate normal curve
       remove(MEAN, STDEV) # Clean workspace
       # close the file
       dev.off()

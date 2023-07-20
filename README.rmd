@@ -14,7 +14,7 @@ knitr::opts_chunk$set(echo = T,
                       eval = T)
 ```
 
-# BACKGROUND
+# Background
 
 These data are from [Wukitsch & Cain, 2021](10.1007/s00213-021-05805-y) and are used here as an example of how to use `ggplot2` to graph Generalized Linear Mixed Effects Models using R. In this case, we have count data so we will use a Poisson model. The `ggplot2` library along with a few others, were used to produce the images in the aforementioned publication. Below is a comprehensive guide on how you can make ones like it for your glmer models too!
 
@@ -717,9 +717,724 @@ And again, things look pretty normal. The remaining Sucrose and Water model runs
 
 # 4. Plotting/Graphing GLMERs with ggplot2
 
+Before we jump into graphing, the next steps seem like a lot of info *because they are a lot of info*. It takes time with any new thing to become comfortable and you may feel you are drinking from a fire-hose at times. The flexibility of `ggplot2` is both its blessing and its curse. It has a steep learning curve, but is powerful because it can do pretty much whatever you want it to do for your graph. If you feel like you are drinking from a fire-hose as you go through the content below, I recommend finding a few beginners tutorials on `ggplot2`, especially if this is your first time using it. Practice using it with some simpler graphing first. The details we go into will start to make sense once you are more familiar with the syntax.
+
+## Planning Our Graphs
+
+***How do we want our graphs to look?***
+
+This is the question we MUST answer before we start writing our first line of code. It is the key to our audience understanding our data. If you are unsure which way might look best, try a few options and talk to mentors or colleagues. Draw a small mock-up and see if the rough plan works, then see if it best tells the story of your data. The more perspectives you get, the better prepared you are to get a solid answer before making the graph into something worth publishing. That initial effort saves tons of time later. 
+
+In our case, we have obvious Y-axis variables: `Hedonic` and `Aversive Responses`. However, our X-variable situation is less straightforward at first glance. In our 'Overall' analyses, we have 2 categorical variables (`Condition` & `Age`) and one continuous repeated measure variable (`Concentration`). Ergo, it makes sense to use `Concentration` as our X variable and show lines of change for each group across that axis in a single graph. Simple enough.
+
+For the 'Total Ethanol' analyses, however, we have one categorical variable (`Age`) and 2 continuous variables (`Concentration` & `Total Ethanol Consumed`) which will require multiple graphs. In `ggplot2` we can make a graph with one shared Y-axis and multiple graphs that represent slices through one of the continuous variables to effectively create two X-axes. The questions are: which variable do we choose and where do we slice? We could go with a few graphs that slice `Total Ethanol Consumed` into ranges for example from 0-39.9, 40-79.9, and 80-120 g/kg of `Total Ethanol Consumed` and then for each range's graph show `Concentration` as the X-axis with our Y-variable averaged across all the individuals in those ranges at each concentration tested. However, in this case, we already have predefined slices in one of our variables because we sampled at set concentrations along a range of concentrations (5, 20, & 40%). It makes sense to use these predetermined `Concentration` slices as the points that determine our graph slices and our `Total Ethanol Consumed` variable as our X-axis. This is sensical for at least 2 reasons: 1. It will cut the slices at a point where a high amount of measurement occurred along the `Concentration` continuum rendering those values very likely to be accurate, and 2. it will better capture the rich variability that is present in our `Total Ethanol Consumed` variable. 
+
+We will go with the latter of the options: `Concentration` as the X-variable that is sliced to produce multiple graph panels of Responses vs `Total Ethanol Consumed`. To ease comparison between the two analyses, we will show the 'Overall' data and the 'Total Ethanol' data side by side with the same Y-axis specifications. This means we need a nested multi-panel graph. Panel A. will show the graph of the 'Overall' analysis, while panel B. will show the multi-panel graph of the 'Total Ethanol' analysis.
+
+## Testing and Organizing
+
+Now that we know what we want our graphs to look like, we need to keep the aesthetic variables associated with them easy to change and we need an organized structure to store these variables along with the graphs themselves. If we only needed to make one graph, there would be no real point in assigning values to objects to use for argument values in our ggplot code. We'd simply change them directly in the code and be sure to have a nice organized list object for storing the plots. However, since we are making multiple sets of these graphs (6 to be exact), we want them to share aesthetic elements that we don't want to have to change manually for each graph each time we make a change. Thus, we need to integrate our hierarchical organization of our plots into a list object with our organization of our variables related to those plots. But how do we know which elements of our graph code we need variables for? The answer is iterative.
+
+### Graph Setup
+
+First, we need to get our model's predictions into some form of data that we can use for our graph. Our `xlevels` are points on the graph that each function as a joint or pivot point for the sets of lines that will make up our curved trend lines and error ribbons. The more points you have, the curvier your curves look. They are made from a sequence along your x-axis(es) that you determine in advance. For our 'Overall' models, we are making a sequence for `Concentration` from .05 to .40 by 0.025 increments resulting in 15 points for our curve. This should be plenty curvy enough. We also have to mean-center these points so they align with the data that our model used. Then we "uncenter" them so our graphs are in our original units and show trends at our tested values.
+
+```{r Effects Data Frame: OVerall}
+# Create list for storage
+plots <- list()
 
 
-```{r }
+        # Mean center xlevel graphing points 
+        plots$eth$x.axis$overall$xlvls <- seq(.05, .40, .025) - mean(ABHVdata$eth$ctrl$recoded.conc) # the points along the curve you want to use to get good error ribbons.
+        
+        # Pull the effects from model & calculate confidence intervals for graphing
+        plots$eth$avers$overall$fx <- Effect(c("c.conc", "Age", "Condition"),
+                                        models$eth$avers$overall,
+                                        se = list(level = .68), # se is std err and the level is the confidence level. .68 = actual std err for conf int. lower and upper.
+                                        xlevels = list(c.conc = plots$eth$x.axis$overall$xlvls))# the xlevels command is used to increase the number of points calculated for the total ethanol (default = 5)
+        
+        # Convert effect object to data frame
+        plots$eth$avers$overall$fx <- as.data.frame(plots$eth$avers$overall$fx)
+        # Get original Concentration values (un-center the variable)
+        plots$eth$avers$overall$fx$Concentration <- (plots$eth$avers$overall$fx$c.conc + mean(ABHVdata$eth$ctrl$recoded.conc)) * 100
+        # Check that everything went smoothly, look at your new data frame
+        plots$eth$avers$overall$fx
 
+```
+
+Then we do the same thing for our 'Total Ethanol' graph data, however, we have 2 x-variables, so we need to make sure we get the right number of levels of each variable. `Concentration` is pretty easy: we have 3 slices we want to take at each of our measured values (.05, .20, & .40), so we use those values. Thankfully, `Total Ethanol Consumed` is also pretty easy. Instead of assigning specific values, we can tell the effects function to calculate 20 values that are evenly distributed across the range of that variable by just using '= 20'.
+
+```{r Effects Data Frame: Total Ethanol}
+# Mean center xlevel graphing points for ALL of Ethanol's, Total Ethanol graphs
+        plots$eth$x.axis$total.e$xlvls <- c(.05, .20, .40) - mean(ABHVdata$eth$no.ctrl$recoded.conc) # the points along the curve you want to use to get good error ribbons.
+        
+        # Pull the effects from model & calculate confidence intervals for graphing
+        plots$eth$avers$total.e$fx <- Effect(c("c.conc", "Age", "c.totale"),
+                                       models$eth$avers$total.e,
+                                       se = list(level = .68), # se is std err and the level is the confidence level. .68 = actual std err for conf int. lower and upper.
+                                       xlevels = list(c.totale = 20, c.conc = plots$eth$x.axis$total.e$xlvls))# the xlevels command is used to increase the number of points calculated for the total ethanol (default = 5)
+        
+        # Convert effect object to data frame
+        plots$eth$avers$total.e$fx <- as.data.frame(plots$eth$avers$total.e$fx)
+        # Get original Concentration values (un-center the variable)
+        plots$eth$avers$total.e$fx$Concentration <- (plots$eth$avers$total.e$fx$c.conc + mean(ABHVdata$eth$no.ctrl$recoded.conc)) * 100
+        # Get original totale values (un-center the variable)
+        plots$eth$avers$total.e$fx$totale <- (plots$eth$avers$total.e$fx$c.totale + mean(ABHVdata$eth$no.ctrl$TOTAL.ETOH.Swap.Consumed..g.kg.))
+        # Check that everything went smoothly, look at your new data frame
+        plots$eth$avers$total.e$fx
+```
+
+Then, repeat this process for our hedonic graphs (code not included, try on your own for this!)
+
+### Test Graphing & Adjustment
+
+Next we create a basic graph that gets the job done and looks ugly as sin, then store it in a temporary object. Using some of the code in this guide, you can start by calculating out what you need for your error ribbons to be right and getting some of the basic theme elements tested out like text size etc. Our basic graphs look like this:
+
+**Overall graph:**
+```{r Preliminary Overall Graph}
+    # Start ggplot
+    temporary.ggp <- ggplot(plots$eth$avers$overall$fx,
+                                          aes(Concentration, fit,
+                                          group = interaction(Age, Condition),
+                                          col = interaction(Age, Condition),
+                                          fill = interaction(Age, Condition),
+                                          linetype = interaction(Age, Condition),
+                                          shape = interaction(Age, Condition)))+
+      
+      # Add Raw Data to graph
+      geom_point(data = ABHVdata$eth$ctrl, 
+                 aes(x = Concentration, y = Total.Aversive))+
+      
+      # Add Prediction Line to graph
+      geom_smooth(data = plots$eth$avers$overall$fx,
+                  se = FALSE, # Don't show Std. Error, we have error ribbons for that
+                  method = "glm", # Generalized linear model
+                  method.args = list(family = "poisson"))+ # Poisson link function
+  
+      # Add Error Ribbon to Graph
+      geom_ribbon(data = plots$eth$avers$overall$fx,
+                  aes(ymin = lower, ymax = upper))+
+      
+      theme_classic()+
+      xlab("Ethanol % (v/v)")+ # X axis label
+      ylab("Aversive Responses (+/-SEM)") # Y axis label
+    
+    temporary.ggp
+```
+And our **Total Ethanol graph**:
+```{r Preliminary Total Ethanol Graph}
+    # Start ggplot
+    temporary2.ggp <- ggplot(plots$eth$avers$total.e$fx,
+                                          aes(totale,
+                                              fit,
+                                              group = Age,
+                                              col = Age,
+                                              fill = Age,
+                                              shape = Age))+
+      
+      # Add Raw Data to graph
+      geom_point(data = ABHVdata$eth$no.ctrl,
+                 aes(x = TOTAL.ETOH.Swap.Consumed..g.kg.,
+                     y = Total.Aversive))+
+      
+      # Add Prediction Line to graph
+      geom_smooth(data = plots$eth$avers$total.e$fx,
+                  se = FALSE, # Don't show Std. Error, we have error ribbons for that
+                  method = "glm", # Generalized linear model
+                  method.args = list(family = "poisson"))+ # Poisson link function
+
+      
+      # Add Error Ribbon to graph
+      geom_ribbon(data = plots$eth$avers$total.e$fx,
+                  aes(ymin = lower, ymax = upper))+
+      
+      
+      
+      facet_wrap(~ as.factor(Concentration), nrow = 1)+ # Makes the plot multi-panel. One for each level of Concentration
+  
+      theme_classic()+
+      
+      xlab("Total Ethanol Consumed (g/kg)")+
+      ylab("Aversive Responses (+/-SEM)")+
+      ggtitle("Ethanol % (v/v)")
+    
+    temporary2.ggp
+```
+
+Hot garbage! But, everything seems to be there that we need... along with a few things that we don't need and some things covering up other things. How awful, but that's OK! We are going to make it much much nicer. Now, we go through ggplot2's vignettes for [aesthetic specifications](https://ggplot2.tidyverse.org/articles/ggplot2-specs.html) as well as [theme arguments](https://ggplot2.tidyverse.org/reference/theme.html) to change the things we want to change. The values that make up these aesthetic specs and theme arguments are some of the variables that we will need to store in objects to help us easily adjust all the graphs on the fly. After playing around for quite some time, I have extensively fleshed everything out WITHOUT using objects to assign values to our various specs and arguments below.
+
+**Overall graph**
+```{r No Object Assignment: Overall}
+    # Start ggplot
+    temporary.ggp <- ggplot(plots$eth$avers$overall$fx,
+                                          aes(Concentration, fit,
+                                          group = interaction(Age, Condition),
+                                          col = interaction(Age, Condition),
+                                          fill = interaction(Age, Condition),
+                                          linetype = interaction(Age, Condition),
+                                          shape = interaction(Age, Condition)))+
+      
+      # Add Raw Data to graph
+      geom_point(data = ABHVdata$eth$ctrl, 
+                 aes(x = Concentration, y = Total.Aversive),
+                 size = 4,
+                 alpha = 0.75)+
+      
+      # Add Prediction Line to graph
+      geom_smooth(data = plots$eth$avers$overall$fx,
+                  se = FALSE, # Don't show Std. Error, we have error ribbons for that
+                  method = "glm", # Generalized linear model
+                  method.args = list(family = "poisson"), # Poisson link function
+                  linewidth = 1.5)+ # Width of trend lines
+      
+      # Add Error Ribbon to Graph
+      geom_ribbon(data = plots$eth$avers$overall$fx,
+                  aes(ymin = lower, ymax = upper),
+                  colour = NA, # colour = NA suppresses edges of the ribbon
+                  alpha = 0.25)+ # Opacity at 25% (75% Transparent)
+      
+      labs(tag = "A.")+ # Add image tag for multipanel final image
+      
+      scale_color_manual("", 
+                         values = c("#F8C8C8", "#82BFC4","#F8766D","#00BFC4"), # Line and Point color
+                         labels = c('Adolescent+CTRL','Adult+CTRL','Adolescent+IAE','Adult+IAE'))+ # Labels for legend
+      
+      scale_fill_manual("",
+                        values = c("#F8C8C8", "#82BFC4","#F8766D","#00BFC4"), # Ribbon color
+                        labels = c('Adolescent+CTRL','Adult+CTRL','Adolescent+IAE','Adult+IAE'))+ # Legend labels
+
+      scale_linetype_manual("",
+                            values = c("dashed","dashed","solid","solid"), # Types of lines
+                            labels = c('Adolescent+CTRL','Adult+CTRL','Adolescent+IAE','Adult+IAE'))+ # Legend labels
+                            
+      scale_shape_manual("",
+                         values = c(17,18,16,15), # Shapes of points
+                         labels = c('Adolescent+CTRL','Adult+CTRL','Adolescent+IAE','Adult+IAE'))+ # Legend labels
+                         
+      scale_x_continuous(expand = c(0, 0),
+                         limits = c(0, 41), # Axis length limits
+                         breaks = c(5, 20, 40), # Axis break positions
+                         labels = as.character(c(5, 20, 40)))+ # Axis value labels
+                         
+      scale_y_continuous(expand = c(0, 0),
+                         limits = c(0, 110), # Axis length limits
+                         breaks = seq(from = 0, to = 100, by = 25), # Axis break positions
+                         labels = as.character(seq(from = 0, to = 100, by = 25)))+ # Axis value labels
+                         
+      theme_classic()+
+      theme(# Text
+            strip.text.x = element_text(size = 17, face = "bold"), # Modify label text for facets
+            axis.title = element_text(size = 18), # Modify axis title text
+            axis.text = element_text(size = 17, color = "black", face = "bold"), # Modify axis value text
+            legend.title = element_text(size = 16), # Modify legend title text (!) Probably Uneccessary
+            legend.text = element_text(size = 14), # Modify legend value text
+            plot.tag = element_text(size = 32, face = "bold"), # Modify the plot tag (e.g. "A.") text
+            # Positioning
+            axis.title.x = element_text(margin = margin(t = 13, r = 0, b = 0, l = 0)), # Modify X axis appearance
+            axis.title.y = element_text(margin = margin(t = 0, r = 18, b = 0, l = 0)), # Modify Y axis appearance
+            plot.tag.position = c(0.05, 0.95), # Modify position of plot tag
+            legend.position = c(0.275, .85), # Modify position of legend
+            # Other Aesthetics
+            axis.line = element_line(size = 1.3), # Modify axis line attributes
+            axis.ticks = element_line(size = 1.3, color = "black"), # Modify axis tick mark attributes
+            axis.ticks.length = unit(0.2, "cm"), # Modify how long each tick is
+            legend.key.size = unit(1.5, "cm"), # Modify the size of the legend key boxes
+            strip.background = element_rect(colour="white") # Gets rid of default background
+            )+
+      xlab("Ethanol % (v/v)")+ # X axis label
+      ylab("Aversive Responses (+/-SEM)") # Y axis label
+    
+    temporary.ggp
+```
+and the **Total Ethanol graph**
+
+```{r No Object Assignment: Total Ethanol}
+# Start ggplot
+    temporary2.ggp <- ggplot(plots$eth$avers$total.e$fx,
+                                          aes(totale,
+                                              fit,
+                                              group = Age,
+                                              col = Age,
+                                              fill = Age,
+                                              shape = Age))+
+      
+      # Add Raw Data to graph
+      geom_point(data = ABHVdata$eth$no.ctrl,
+                 aes(x = TOTAL.ETOH.Swap.Consumed..g.kg.,
+                     y = Total.Aversive),
+                 size = 4, 
+                 alpha = 0.75)+
+      
+      # Add Prediction Line to graph
+      geom_smooth(data = plots$eth$avers$total.e$fx,
+                  se = FALSE, # Don't show Std. Error, we have error ribbons for that
+                  method = "glm", # Generalized linear model
+                  method.args = list(family = "poisson"), # Poisson link function
+                  linewidth = 1.5)+ # Width of trend lines
+      
+      
+      # Add Error Ribbon to graph
+      geom_ribbon(data = plots$eth$avers$total.e$fx,
+                  aes(ymin = lower, ymax = upper),
+                  colour = NA, # colour = NA suppresses edges of the ribbon
+                  alpha = .25)+ # Opacity at 25% (75% Transparent)
+      
+      
+      
+      facet_wrap(~ as.factor(Concentration), nrow = 1)+ # Makes the plot multi-panel. One for each level of Concentration
+      
+      labs(tag="B.")+ # Add image tag for final image combo.
+      
+      scale_color_manual("", 
+                         values = c("#F8766D", "#00BFC4"), # Line and Point color
+                         labels = c('Adolescent+IAE', 'Adult+IAE'))+ # Labels for legend
+      
+      scale_fill_manual("",
+                        values = c("#F8766D", "#00BFC4"), # Ribbon color
+                        labels = c('Adolescent+IAE', 'Adult+IAE'))+ # Legend labels
+      
+      scale_linetype_manual("",
+                            values = c("solid", "solid"), # Types of lines
+                            labels = c('Adolescent+IAE', 'Adult+IAE'))+ # Legend labels
+      
+      scale_shape_manual("",
+                         values = c(16, 15), # Shapes of points
+                         labels = c('Adolescent+IAE', 'Adult+IAE'))+
+      
+      scale_x_continuous(expand = c(0, 0),
+                         limits = c(0, 130), # Axis length limits
+                         breaks = seq(0, 125, 25), # Axis break positions
+                         labels = as.character(seq(0, 125, 25)))+ # Axis value labels
+      
+      scale_y_continuous(expand = c(0, 0),
+                         limits = c(0, 110), # Axis length limits
+                         breaks = seq(from = 0, to = 100, by = 25), # Axis break positions
+                         labels = as.character(seq(from = 0, to = 100, by = 25)))+ # makes every other label
+      
+      theme_classic()+
+      theme(# Text
+        strip.text.x = element_text(size = 17, face = "bold"), # Modify label text for facets
+        axis.title = element_text(size = 18), # Modify axis title text
+        axis.text = element_text(size = 17, color = "black", face = "bold"), # Modify axis value text
+        legend.title = element_text(size = 16), # Modify legend title text (!) Probably Uneccessary
+        legend.text = element_text(size = 14), # Modify legend value text
+        plot.tag = element_text(size = 32, face = "bold"), # Modify the plot tag (e.g. "A.") text
+        plot.title = element_text(size = 18, hjust = 0.5), # I used the plot title text as axis text here.
+        # Positioning
+        axis.title.x = element_text(margin = margin(t = 13, r = 0, b = 0, l = 0)), # Modify X axis appearance
+        axis.title.y = element_text(margin = margin(t = 0, r = 18, b = 0, l = 0)), # Modify Y axis appearance
+        plot.tag.position = c(0.035, 0.95), # Modify position of plot tag
+        legend.position = c(0.125, .85), # Modify position of legend # Modify position of legend
+        # Other Aesthetics
+        axis.line = element_line(size = 1.3), # Modify axis line attributes
+        axis.ticks = element_line(size = 1.3, color = "black"), # Modify axis tick mark attributes
+        axis.ticks.length = unit(0.2, "cm"), # Modify how long each tick is
+        legend.key.size = unit(1.5, "cm"), # Modify the size of the legend key boxes
+        strip.background = element_rect(colour="white"), # Gets rid of default background
+        panel.spacing = unit(1.75, "lines")
+      )+
+      xlab("Total Ethanol Consumed (g/kg)")+
+      ylab("Aversive Responses (+/-SEM)")+
+      ggtitle("Ethanol % (v/v)")
+    
+    temporary2.ggp
+```
+
+Less garbage! But the proportions still look weird. This is fine because we can't really judge how well everything is going to look until it is in its final format as a multipanel graph AND it has been saved as the size we want it. If it looks off in the final result, then we know something needs to be adjusted. 
+
+### Stitching the Graphs
+
+Let's get an idea of the final result. We'll use `patchwork` to stitch our two graphs together and then save it so we can take a look at what the final output would look like:
+
+```{r Stitch the Graphs with Patchwork}
+  # Combine the two individual ggplots into one larger multipanel ggplot
+    temporary3.ggp <- temporary.ggp + 
+                      temporary2.ggp +
+                      plot_layout(ncol = 2, widths = c(1, 2)) # Layout 2 columns with 1/3 for first col 2/3s for second plot.
+    
+    temporary3.ggp
+    
+    # Save the plot
+    ggsave("Fig 8A&B Ethanol Aversive Fits.png", 
+           temporary3.ggp, 
+           width = 1600, 
+           height = 600, 
+           units = "px", 
+           dpi = 96)
+```
+
+As you can see, the plot that we see in RStudio (Above) is very different from what we see in the saved plot (Below). So DON'T BE FOOLED!
+
+![](README_files/Fig 8A&B Ethanol Aversive Fits.png)
+
+### Making & Organizing Graph Variables
+
+Once we have played around and made our aesthetic and theme adjustments, we can figure out what values we need to store in objects that specify a variety of attributes for our graphs. We also will start to get a sense of which variables are shared between graphs and which are not. Then we can begin organizing these variables into our hierarchy within our `plots` object and assigning names and values to them. There are global attributes that our graphs should share to keep things looking consistent, like axis title text size. However, there are other attributes that are unique to a specific category. Y-axis break positions, for example, are different between our two types of responses (Aversive and Hedonic) because Hedonic Responses tend to be greater in number than Aversive Responses. We want to be able to compare between both graphs of Hedonic Responding **OR** both graphs of Aversive Responding on the same scale for both analyses, so the break positions and scales are similar between the Hedonic graphs. We also want to be able to compare between different substances when the response type is the same, thus, Y-axis breaks are determined by response type regardless of the substance being analyzed. Other variables like X-axis break positions are common between the two response types, but differ depending on the analysis type we are looking at. Mapping out which attributes should be shared between graphs and what variables that sharing is based on is important for remaining organized in your project. I advise sitting down and making a bulleted list as you go through and add aesthetics and theme arguments to your graph. Below are several attributes which are organized in this way and share a common storage object, "plots". We can see all the variables, including those for substances that weren't included here to give you an idea of how the organization worked for the project as a whole.
+
+```{r Graph Variables}
+# GLOBAL ATTRIBUTES ####
+  
+  ## Text ####
+  plots$global$strip.text.x <- element_text(size = 17, face = "bold") # Modify label text for facets
+  plots$global$axis.title <- element_text(size = 18) # Modify axis title text
+  plots$global$axis.text <- element_text(size = 17, color = "black", face = "bold") # Modify axis value text
+  plots$global$legend.title <- element_text(size = 16) # Modify legend title text
+  plots$global$legend.text <- element_text(size = 14) # Modify legend value text
+  plots$global$plot.tag <- element_text(size = 32, face = "bold") # Modify the plot tag (e.g. "A.") text
+  plots$global$plot.title <- element_text(size = 18, hjust = 0.5)
+  
+  ## Positioning ####
+  plots$global$axis.title.x <- element_text(margin = margin(t = 13, r = 0, b = 0, l = 0)) # Adjusts margins around axis title text
+  plots$global$axis.title.y <- element_text(margin = margin(t = 0, r = 18, b = 0, l = 0)) # Adjusts margins around axis title text
+    # Overall
+    plots$global$overall$plot.tag.position <- c(0.05, 0.95) # X increasing from left, Y and increasing from bottom
+    plots$global$overall$legend.position <- c(0.275, .85) # X increasing from left, Y and increasing from bottom
+    # Total Ethanol
+    plots$global$total.e$plot.tag.position <- c(0.035, 0.95) # X increasing from left, Y and increasing from bottom
+    plots$global$total.e$legend.position <- c(0.125, .85) # X increasing from left, Y and increasing from bottom
+  
+  ## Aesthetics ####
+  plots$global$axis.line <- element_line(size = 1.3) # Thickness of axis lines
+  plots$global$axis.ticks <- element_line(size = 1.3, color = "black") # Thickness & color of axis ticks 
+  plots$global$axis.ticks.length <- unit(0.2, "cm")
+  plots$global$legend.key.size <- unit(1.5, "cm")
+  plots$global$panel.spacing <- unit(1.75, "lines")
+  
+  ## Data Points ####
+  
+  plots$global$pt.size <- 4 # point size
+  plots$global$pt.alpha <- 0.75# opacity proportion
+  plots$global$overall$pt.shapes <- c(17, 18, 16, 15) # vector of shape numbers
+  plots$global$total.e$pt.shapes <- c(16, 15) # vector of shape numbers
+  
+  ## Trend Lines ####
+  
+  plots$global$linewidth <- 1.5 # line thickness
+  plots$global$overall$line.types <- c("dashed", "dashed", "solid", "solid") # vector of line type strings e.g. "solid" or "dashed"
+  plots$global$total.e$line.types <- c("solid", "solid") # vector of line type strings e.g. "solid" or "dashed"
+  
+  ## Error Ribbons & Bars ####
+  
+  plots$global$rib.edge.color <- NA # NA suppresses edges of ribbon
+  plots$global$rib.alpha <- 0.25 # Opacity proportion
+  plots$global$overall$rib.color <- c("#F8C8C8", # vector of color hex codes or names
+                                      "#82BFC4",
+                                      "#F8766D",
+                                      "#00BFC4") 
+  plots$global$total.e$rib.color <- c("#F8766D", # vector of color hex codes or names
+                                      "#00BFC4") 
+  plots$global$err.bar.width <- 0.2
+  
+  ## Group ####
+  
+    # Line & Point Labels
+    plots$global$overall$labels <- c('Adolescent+CTRL' , # vector of strings
+                                     'Adult+CTRL',       # Common labels combine together in the legend
+                                     'Adolescent+IAE',
+                                     'Adult+IAE')
+    
+    plots$global$total.e$labels <- c('Adolescent+IAE', # vector of strings
+                                     'Adult+IAE')
+    
+    # Line & Point Colors
+    plots$global$overall$colors <- c("#F8C8C8", # vector of color hex codes or names
+                                     "#82BFC4", 
+                                     "#F8766D", 
+                                     "#00BFC4")
+    
+    plots$global$total.e$colors <- c("#F8766D", # vector of color hex codes or names
+                                     "#00BFC4")
+
+
+# Y AXIS ###
+  
+  ## Aversive ####
+  
+    # Break Positions
+    plots$y.axis$avers$breaks <- seq(from = 0, to = 100, by = 25) 
+    # Labels
+    plots$y.axis$avers$labels <- as.character(plots$y.axis$avers$breaks)
+    # Limits
+    plots$y.axis$avers$lims <- c(0, 110)
+    
+  ## Hedonic ####
+    
+    # Break Positions
+    plots$y.axis$hedon$breaks <- seq(0, 550, 50)
+    # Labels
+    plots$y.axis$hedon$labels <- as.character(ifelse(plots$y.axis$hedon$breaks == 0 |
+                                                plots$y.axis$hedon$breaks %% 100 == 0,
+                                                plots$y.axis$hedon$breaks,
+                                                "")) # makes every other label ""
+    # Limits
+    plots$y.axis$hedon$lims <- c(0, 580)
+
+  
+# X AXIS####
+  
+  ## Ethanol ####
+  
+    # Break Positions for Concentration
+    plots$eth$x.axis$overall$breaks <- sort(unique(ABHVdata$eth$ctrl$Concentration))
+    # Labels for Concentration
+    plots$eth$x.axis$overall$labels <- as.character(plots$eth$x.axis$overall$breaks)
+    # Overall X Limits
+    plots$eth$x.axis$overall$lims <- c(0, 41)
+    
+    # Break Positions for Total Ethanol Consumed
+    plots$eth$x.axis$total.e$breaks <- seq(0, 125, 25)
+    # Labels for Total Ethanol Consumed
+    plots$eth$x.axis$total.e$labels <- as.character(plots$eth$x.axis$total.e$breaks)
+    # Total Ethanol X Limits
+    plots$eth$x.axis$total.e$lims <- c(0, 130)
+    
+  ## Sucrose ####
+    
+    # X Break Positions for Molarity
+    plots$suc$x.axis$overall$breaks <- sort(unique(ABHVdata$suc$ctrl$molarity))
+    # X Labels for Molarity
+    plots$suc$x.axis$overall$labels <- as.character(plots$suc$x.axis$overall$breaks)
+    # Overall X Limits
+    plots$suc$x.axis$overall$lims <- c(0, 1)
+    
+    # X Break Positions for Total Ethanol Consumed
+    plots$suc$x.axis$total.e$breaks = seq(0, 125, 25)
+    # X Labels for Total Ethanol Consumed
+    plots$suc$x.axis$total.e$labels = as.character(plots$suc$x.axis$total.e$breaks)
+    # Total Ethanol X Limits
+    plots$suc$x.axis$total.e$lims <- c(0, 130)
+     
+  ## Water ####
+    
+    # X Break Positions for Total Ethanol Consumed
+    plots$h2o$x.axis$total.e$breaks = seq(0, 125, 25)
+    # X Labels for Total Ethanol Consumed
+    plots$h2o$x.axis$total.e$labels = as.character(plots$h2o$x.axis$total.e$breaks)
+    # Total Ethanol X Limits
+    plots$h2o$x.axis$total.e$lims <- c(0, 130)
+
+
+# Save the workspace
+save.image("ABHV_workspace.RData")
+```
+
+I left them named pretty much the same name they have as a specification or argument, so they are easy to use. 
+
+### The Final Graphs
+
+This leaves us with out final code for both our graphs that we can copy over to our other graphs with minimal changes and save as .png files to our drive.
+
+```{r Final Graphs, results = "hide", eval = F}
+  # AVERSIVE ####
+    
+    ## Overall ####
+  
+    # Start ggplot
+    plots$eth$avers$overall$ggp <- ggplot(plots$eth$avers$overall$fx,
+                                          aes(Concentration, fit,
+                                          group = interaction(Age, Condition),
+                                          col = interaction(Age, Condition),
+                                          fill = interaction(Age, Condition),
+                                          linetype = interaction(Age, Condition),
+                                          shape = interaction(Age, Condition)))+
+      
+      # Add Raw Data to graph
+      geom_point(data = ABHVdata$eth$ctrl, 
+                 aes(x = Concentration, y = Total.Aversive),
+                 size = plots$global$pt.size,
+                 alpha = plots$global$pt.alpha)+
+      
+      # Add Prediction Line to graph
+      geom_smooth(data = plots$eth$avers$overall$fx,
+                  se = FALSE, # Don't show Std. Error, we have error ribbons for that
+                  method = "glm", # Generalized linear model
+                  method.args = list(family = "poisson"), # Poisson link function
+                  linewidth = plots$global$linewidth)+ # Width of trend lines
+      
+      # Add Error Ribbon to Graph
+      geom_ribbon(data = plots$eth$avers$overall$fx,
+                  aes(ymin = lower, ymax = upper),
+                  colour = plots$global$rib.edge.color, # colour = NA suppresses edges of the ribbon
+                  alpha = plots$global$rib.alpha)+ # Opacity at 25% (75% Transparent)
+      
+      labs(tag = "A.")+ # Add image tag for multipanel final image
+      
+      scale_color_manual("", 
+                         values = plots$global$overall$colors, # Line and Point color
+                         labels = plots$global$overall$labels)+ # Labels for legend
+      
+      scale_fill_manual("",
+                        values = plots$global$overall$rib.color, # Ribbon color
+                        labels = plots$global$overall$labels)+ # Legend labels
+
+      scale_linetype_manual("",
+                            values = plots$global$overall$line.types, # Types of lines
+                            labels = plots$global$overall$labels)+ # Legend labels
+                            
+      scale_shape_manual("",
+                         values = plots$global$overall$pt.shapes, # Shapes of points
+                         labels = plots$global$overall$labels)+ # Legend labels
+                         
+      scale_x_continuous(expand = c(0, 0),
+                         limits = plots$eth$x.axis$overall$lims, # Axis length limits
+                         breaks = plots$eth$x.axis$overall$breaks, # Axis break positions
+                         labels = plots$eth$x.axis$overall$labels)+ # Axis value labels
+                         
+      scale_y_continuous(expand = c(0, 0),
+                         limits = plots$y.axis$avers$lims, # Axis length limits
+                         breaks = plots$y.axis$avers$breaks, # Axis break positions
+                         labels = plots$y.axis$avers$labels)+ # Axis value labels
+                         
+      theme_classic()+
+      theme(# Text
+            strip.text.x = plots$global$strip.text.x, # Modify label text for facets
+            axis.title = plots$global$axis.title, # Modify axis title text
+            axis.text = plots$global$axis.text, # Modify axis value text
+            legend.title = plots$global$legend.title, # Modify legend title text (!) Probably Uneccessary
+            legend.text = plots$global$legend.text, # Modify legend value text
+            plot.tag = plots$global$plot.tag, # Modify the plot tag (e.g. "A.") text
+            # Positioning
+            axis.title.x = plots$global$axis.title.x, # Modify X axis appearance
+            axis.title.y = plots$global$axis.title.y, # Modify Y axis appearance
+            plot.tag.position = plots$global$overall$plot.tag.position, # Modify position of plot tag
+            legend.position = plots$global$overall$legend.position, # Modify position of legend
+            # Other Aesthetics
+            axis.line = plots$global$axis.line, # Modify axis line attributes
+            axis.ticks = plots$global$axis.ticks, # Modify axis tick mark attributes
+            axis.ticks.length = plots$global$axis.ticks.length, # Modify how long each tick is
+            legend.key.size = plots$global$legend.key.size, # Modify the size of the legend key boxes
+            strip.background = element_rect(colour="white") # Gets rid of default background
+            )+
+      xlab("Ethanol % (v/v)")+ # X axis label
+      ylab("Aversive Responses (+/-SEM)") # Y axis label
+    
+    plots$eth$avers$overall$ggp
+    
+    # Save the plot
+    ggsave("Fig 8A Ethanol Aversive Graph.png",
+           plots$eth$avers$overall$ggp, 
+           width = 533, 
+           height = 600, 
+           units = "px", 
+           dpi = 81)
+
+
+    ## Total Ethanol ####
+    
+    # Start ggplot
+    plots$eth$avers$total.e$ggp <- ggplot(plots$eth$avers$total.e$fx,
+                                          aes(totale,
+                                              fit,
+                                              group = Age,
+                                              col = Age,
+                                              fill = Age,
+                                              shape = Age))+
+      
+      # Add Raw Data to graph
+      geom_point(data = ABHVdata$eth$no.ctrl,
+                 aes(x = TOTAL.ETOH.Swap.Consumed..g.kg.,
+                     y = Total.Aversive),
+                 size = plots$global$pt.size, 
+                 alpha = plots$global$pt.alpha)+
+      
+      # Add Prediction Line to graph
+      geom_smooth(data = plots$eth$avers$total.e$fx,
+                  se = FALSE, # Don't show Std. Error, we have error ribbons for that
+                  method = "glm", # Generalized linear model
+                  method.args = list(family = "poisson"), # Poisson link function
+                  linewidth = plots$global$linewidth)+ # Width of trend lines
+      
+      
+      # Add Error Ribbon to graph
+      geom_ribbon(data = plots$eth$avers$total.e$fx,
+                  aes(ymin = lower, ymax = upper),
+                  colour = plots$global$rib.edge.color, # colour = NA suppresses edges of the ribbon
+                  alpha = plots$global$rib.alpha)+ # Opacity at 25% (75% Transparent)
+      
+      
+      
+      facet_wrap(~ as.factor(Concentration), nrow = 1)+ # Makes the plot multi-panel. One for each level of Concentration
+      
+      labs(tag="B.")+ # Add image tag for final image combo.
+      
+      scale_color_manual("", 
+                         values = plots$global$total.e$colors, # Line and Point color
+                         labels = plots$global$total.e$labels)+ # Labels for legend
+      
+      scale_fill_manual("",
+                        values = plots$global$total.e$rib.color, # Ribbon color
+                        labels = plots$global$total.e$labels)+ # Legend labels
+      
+      scale_linetype_manual("",
+                            values = plots$global$total.e$line.types, # Types of lines
+                            labels = plots$global$total.e$labels)+ # Legend labels
+      
+      scale_shape_manual("",
+                         values = plots$global$total.e$pt.shapes, # Shapes of points
+                         labels = plots$global$total.e$labels)+ # Legend labels
+      
+      scale_x_continuous(expand = c(0, 0),
+                         limits = plots$eth$x.axis$total.e$lims, # Axis length limits
+                         breaks = plots$eth$x.axis$total.e$breaks, # Axis break positions
+                         labels = plots$eth$x.axis$total.e$labels)+ # Axis value labels
+      
+      scale_y_continuous(expand = c(0, 0),
+                         limits = plots$y.axis$avers$lims, # Axis length limits
+                         breaks = plots$y.axis$avers$breaks, # Axis break positions
+                         labels = plots$y.axis$avers$labels)+ # Axis value labels
+      
+      theme_classic()+
+      theme(# Text
+        strip.text.x = plots$global$strip.text.x, # Modify label text for facets
+        axis.title = plots$global$axis.title, # Modify axis title text
+        axis.text = plots$global$axis.text, # Modify axis value text
+        legend.title = plots$global$legend.title, # Modify legend title text (!) Probably Uneccessary
+        legend.text = plots$global$legend.text, # Modify legend value text
+        plot.tag = plots$global$plot.tag, # Modify the plot tag (e.g. "A.") text
+        plot.title = plots$global$plot.title,
+        # Positioning
+        axis.title.x = plots$global$axis.title.x, # Modify X axis appearance
+        axis.title.y = plots$global$axis.title.y, # Modify Y axis appearance
+        plot.tag.position = plots$global$total.e$plot.tag.position, # Modify position of plot tag
+        legend.position = plots$global$total.e$legend.position, # Modify position of legend
+        # Other Aesthetics
+        axis.line = plots$global$axis.line, # Modify axis line attributes
+        axis.ticks = plots$global$axis.ticks, # Modify axis tick mark attributes
+        axis.ticks.length = plots$global$axis.ticks.length, # Modify how long each tick is
+        legend.key.size = plots$global$legend.key.size, # Modify the size of the legend key boxes
+        strip.background = element_rect(colour="white"), # Gets rid of default background
+        panel.spacing = plots$global$panel.spacing
+      )+
+      xlab("Total Ethanol Consumed (g/kg)")+
+      ylab("Aversive Responses (+/-SEM)")+
+      ggtitle("Ethanol % (v/v)")
+    
+    plots$eth$avers$combo.ggp
+    
+    # Save the plot
+    ggsave("Fig 8B Ethanol Aversive Total Ethanol Graph.png", 
+           plots$eth$avers$total.e$ggp, 
+           width = 1067, 
+           height = 600, 
+           units = "px", 
+           dpi = 81)
+
+    # Combine the two individual ggplots into one larger multipanel ggplot
+    plots$eth$avers$combo.ggp <- plots$eth$avers$overall$ggp + 
+      plots$eth$avers$total.e$ggp +
+      plot_layout(ncol = 2, widths = c(1, 2)) # Layout 2 columns with 1/3 for first col 2/3s for second plot.
+    
+    plots$eth$avers$combo.ggp
+    
+    # Save the plot
+    ggsave("Fig 8A&B Ethanol Aversive Fits.png", 
+           plots$eth$avers$combo.ggp, 
+           width = 1600, 
+           height = 600, 
+           units = "px", 
+           dpi = 96)
+
+# Save the workspace
+save.image("ABHV_workspace.RData")
 ```
 
